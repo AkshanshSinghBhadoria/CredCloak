@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg-primary: #0A0D14;
+  --color-bg-secondary: #111827;
+  --color-bg-tertiary: #1C2333;
+  --color-accent-primary: #6366F1;
+  --color-accent-glow: #818CF8;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-text-primary: #F9FAFB;
+  --color-text-secondary: #9CA3AF;
+  --color-text-tertiary: #6B7280;
+  --color-border: #1F2937;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(99, 102, 241, 0.22), transparent 24rem),
+    radial-gradient(circle at 88% 26%, rgba(16, 185, 129, 0.1), transparent 22rem),
+    var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans), sans-serif;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: '';
+  background-image:
+    linear-gradient(rgba(249, 250, 251, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(249, 250, 251, 0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+
+::selection {
+  background: rgba(129, 140, 248, 0.35);
+}
+
+.focus-ring {
+  @apply outline-none ring-2 ring-indigo-400/60 ring-offset-2 ring-offset-cloak-bg;
+}
