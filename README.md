@@ -79,7 +79,7 @@ The dashboard fetches and lists recent native payments from Horizon for the conn
 
 ### 5. Successful Testnet Transaction & User Feedback
 The "Send XLM" form handles local transaction composition, secure wallet signing, and submission. Once complete, it displays transaction feedback, success status, and a direct clickable link to the transaction detail on the Stellar Expert block explorer.
-![Successful Testnet Transaction Result](./snapshots/5_SendXLM.png)
+![Successful Testnet Transaction Result](./snapshots/5_TransactionFeedback.jpeg)
 
 ---
 
