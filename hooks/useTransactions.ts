@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { fetchTransactions } from '@/lib/horizon';
 import { StellarTransaction } from '@/lib/types';
 
@@ -10,34 +10,35 @@ export function useTransactions(address: string | null) {
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(async (bypassCache = false) => {
     if (!address) {
       setTransactions([]);
       return;
     }
-
-    let active = true;
-    const load = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const txs = await fetchTransactions(address, 200);
-        if (!active) return;
-        setTransactions(txs);
-        setLastFetched(new Date());
-      } catch (err) {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : 'Failed to load transactions.');
-      } finally {
-        if (active) setIsLoading(false);
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (bypassCache && typeof window !== 'undefined') {
+        const cacheKey = `credcloak:txs:${address}:200`;
+        window.sessionStorage.removeItem(cacheKey);
       }
-    };
-
-    load();
-    return () => {
-      active = false;
-    };
+      const txs = await fetchTransactions(address, 200);
+      setTransactions(txs);
+      setLastFetched(new Date());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load transactions.');
+    } finally {
+      setIsLoading(false);
+    }
   }, [address]);
 
-  return { transactions, isLoading, error, lastFetched };
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const refresh = useCallback(async () => {
+    await load(true);
+  }, [load]);
+
+  return { transactions, isLoading, error, lastFetched, refresh };
 }

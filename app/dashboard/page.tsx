@@ -26,7 +26,7 @@ const tabs = [
 export default function DashboardPage() {
   const router = useRouter();
   const { walletState, connect, disconnect, isConnecting, signTransaction, refreshBalance } = useWallet();
-  const { transactions, isLoading, error, lastFetched } = useTransactions(walletState.address);
+  const { transactions, isLoading, error, lastFetched, refresh: refreshTransactions } = useTransactions(walletState.address);
   const currentBalance = Number.parseFloat(walletState.balance ?? '0');
   const { stats, loanReadiness, windowDays, setWindowDays } = useFinancialStats(transactions, currentBalance);
 
@@ -70,8 +70,7 @@ export default function DashboardPage() {
 
   const refreshAfterSend = async () => {
     await refreshBalance();
-    window.sessionStorage.removeItem(`credcloak:txs:${walletState.address}:200`);
-    window.location.reload();
+    await refreshTransactions();
   };
 
   return (
@@ -180,7 +179,7 @@ export default function DashboardPage() {
 
           {activeTab === 'transactions' && (
             <div className="animate-rise">
-              <TransactionHistory transactions={transactions} isLoading={isLoading} address={walletState.address} />
+              <TransactionHistory transactions={transactions} isLoading={isLoading} address={walletState.address} onFunded={refreshAfterSend} />
             </div>
           )}
 

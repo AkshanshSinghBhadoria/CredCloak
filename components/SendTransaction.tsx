@@ -102,15 +102,85 @@ export function SendTransaction({
       </form>
 
       {result?.success && (
-        <div className="mt-5 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-100">
-          Transaction submitted:
-          <a href={result.stellarLabUrl} target="_blank" rel="noreferrer" className="ml-2 font-mono underline">
-            {result.hash}
-          </a>
+        <div className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 backdrop-blur-md animate-rise">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-400">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="font-display font-bold text-white text-base">Transaction Dispatched Successfully</h3>
+                <p className="text-sm text-slate-400 mt-1">Your transaction has been written and validated on the Stellar Testnet ledger.</p>
+              </div>
+
+              <div className="grid gap-2 text-xs rounded-xl bg-slate-950/60 p-3 border border-slate-900 font-mono">
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Tx Hash:</span>
+                  <span className="text-slate-300 truncate max-w-[200px]" title={result.hash}>{result.hash}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Status:</span>
+                  <span className="text-emerald-400 font-bold">Confirmed</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-1">
+                <a
+                  href={result.stellarLabUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600/90 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-indigo-600"
+                >
+                  <span>View on Stellar Expert</span>
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setResult(null)}
+                  className="rounded-lg border border-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-400 hover:text-white transition"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
+
       {result && !result.success && (
-        <div className="mt-5 rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-100">{result.error}</div>
+        <div className="mt-6 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-5 backdrop-blur-md animate-rise">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-rose-500/10 p-2 text-rose-400">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="font-display font-bold text-white text-base">Transaction Submission Failed</h3>
+                <p className="text-sm text-rose-300/80 mt-1">An error occurred while signing or submitting your transaction to Horizon.</p>
+              </div>
+
+              <div className="rounded-xl bg-slate-950/60 p-3 border border-slate-900">
+                <p className="font-mono text-xs text-rose-200 break-all">{result.error}</p>
+              </div>
+
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setResult(null)}
+                  className="rounded-lg bg-rose-500/10 border border-rose-500/20 px-3.5 py-2 text-xs font-semibold text-rose-200 hover:bg-rose-500/20 transition"
+                >
+                  Dismiss & Retry
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </Card>
   );

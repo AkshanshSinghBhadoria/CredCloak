@@ -10,7 +10,7 @@ import { StellarTransaction } from '@/lib/types';
 
 type Filter = 'all' | 'received' | 'sent';
 
-export function TransactionHistory({ transactions, isLoading, address }: { transactions: StellarTransaction[]; isLoading: boolean; address: string | null }) {
+export function TransactionHistory({ transactions, isLoading, address, onFunded }: { transactions: StellarTransaction[]; isLoading: boolean; address: string | null; onFunded?: () => Promise<void> | void }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [page, setPage] = useState(1);
   const [isFunding, setIsFunding] = useState(false);
@@ -38,11 +38,15 @@ export function TransactionHistory({ transactions, isLoading, address }: { trans
       if (!response.ok) {
         throw new Error(`Friendbot failed with status ${response.status}`);
       }
-      // Successful funding! Clear cache and reload
+      // Successful funding! Clear cache and trigger callback
       if (typeof window !== 'undefined') {
         window.sessionStorage.removeItem(`credcloak:txs:${address}:200`);
       }
-      window.location.reload();
+      if (onFunded) {
+        await onFunded();
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
       console.error(err);
       setFundingError('Failed to fund account automatically. Please try the manual link or try again.');
