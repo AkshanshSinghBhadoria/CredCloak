@@ -57,6 +57,32 @@ CredCloak follows a robust three-layered client-side approach:
 
 ---
 
+## 📸 Screenshots
+
+Here are the screenshots demonstrating the application's core functionality as required for the Level 1 submission:
+
+### 1. Landing Page & Wallet Connection (Connected State)
+The user can connect their wallet (Freighter, Albedo, xBull, or LOBSTR) via the unified wallet connection modal. Once connected, the user's public address is truncated and displayed.
+![Wallet Connected State](./snapshots/1_LandingPage.PNG)
+
+### 2. Account Overview & Balance Display
+Once a wallet is successfully connected, its current XLM balance is fetched from the Stellar Testnet and displayed in both the header and the main statistics overview cards.
+![Balance Displayed](./snapshots/2_Overview.PNG)
+
+### 3. SVG Loan Readiness Gauge (DTI Meter Calibration)
+The Readiness tab displays a dynamic SVG gauge showing the calculated Debt-to-Income (DTI) ratio. On load, the gauge runs a 2-second calibration sweep before stabilizing on the user's active DTI.
+![Readiness Gauge & Score](./snapshots/3_Readiness.png)
+
+### 4. Ingested Transaction History
+The dashboard fetches and lists recent native payments from Horizon for the connected account, supporting dynamic statistics calculations for 30, 60, and 90-day windows.
+![Transaction History](./snapshots/4_Transactions.png)
+
+### 5. Successful Testnet Transaction & User Feedback
+The "Send XLM" form handles local transaction composition, secure wallet signing, and submission. Once complete, it displays transaction feedback, success status, and a direct clickable link to the transaction detail on the Stellar Expert block explorer.
+![Successful Testnet Transaction Result](./snapshots/5_SendXLM.png)
+
+---
+
 ## ⚙️ Setup & Installation
 
 ### 1. Prerequisites
