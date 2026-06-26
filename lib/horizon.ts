@@ -1,6 +1,6 @@
 import { StellarTransaction } from '@/lib/types';
 
-const HORIZON_TESTNET = process.env.NEXT_PUBLIC_HORIZON_URL ?? 'https://horizon-testnet.stellar.org';
+const HORIZON_TESTNET = (process.env.NEXT_PUBLIC_HORIZON_URL ?? 'https://horizon-testnet.stellar.org').trim();
 const CACHE_TTL = 60_000;
 
 interface HorizonPaymentRecord {

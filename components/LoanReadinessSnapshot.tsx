@@ -45,7 +45,7 @@ export function LoanReadinessSnapshot({ indicators }: { indicators: LoanReadines
         title="ZK proof generation is coming in a future update"
         className="mt-5 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 font-semibold text-slate-500"
       >
-        Generate ZK Proof
+        Generate ZK Proof - Comming Soon
       </button>
     </Card>
   );

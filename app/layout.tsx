@@ -11,6 +11,9 @@ const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 export const metadata: Metadata = {
   title: 'CredCloak | Private Loan Readiness on Stellar',
   description: 'Analyze Stellar testnet wallet history and preview private loan readiness metrics.',
+  icons: {
+    icon: '/credcloak-logo.svg',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

@@ -31,10 +31,9 @@ export function WalletConnect({ walletState, connect, disconnect, isConnecting, 
         <button
           type="button"
           onClick={disconnect}
-          className="grid h-7 w-7 place-items-center rounded-full bg-slate-900 text-slate-300 transition hover:bg-red-500/20 hover:text-red-200"
-          aria-label="Disconnect wallet"
+          className="rounded-lg bg-slate-900/80 px-2.5 py-1 text-xs font-semibold text-slate-300 transition hover:bg-red-500/20 hover:text-red-200"
         >
-          x
+          Disconnect
         </button>
       </div>
     );

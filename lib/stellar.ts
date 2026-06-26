@@ -1,9 +1,9 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { SendTransactionParams, TransactionResult } from '@/lib/types';
 
-const HORIZON_TESTNET = process.env.NEXT_PUBLIC_HORIZON_URL ?? 'https://horizon-testnet.stellar.org';
+const HORIZON_TESTNET = (process.env.NEXT_PUBLIC_HORIZON_URL ?? 'https://horizon-testnet.stellar.org').trim();
 const NETWORK_PASSPHRASE = StellarSdk.Networks.TESTNET;
-const STELLAR_LAB_BASE = `${process.env.NEXT_PUBLIC_STELLAR_LAB_URL ?? 'https://stellar.expert/explorer/testnet'}/tx`;
+const STELLAR_LAB_BASE = `${(process.env.NEXT_PUBLIC_STELLAR_LAB_URL ?? 'https://stellar.expert/explorer/testnet').trim()}/tx`;
 
 export async function buildAndSubmitTransaction(
   params: SendTransactionParams,
