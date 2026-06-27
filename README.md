@@ -25,6 +25,7 @@ This release implements the Proof Registry smart contract on-chain and integrate
   * **Contract Address**: `CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET`
   * **WASM Upload Hash**: `212cf2f6e9c8439b728838e48106e17b0c6cf90d52af7170f8c7b092a1dd640f`
   * **Instantiation Hash**: `ffc3d4e79b1ebb855ae2248c688d1ed1efbbf3b5e1463a000ed5d3eafa01d290`
+  * **Contract Call (register_claim) Tx Hash**: `c801d2ab4c9dd7de2f0d52fa73b0f5eb69dad97ec003f7b33f6b2f9657483d53`
 - **On-Chain Readiness Claim**: Gated by eligibility checks (average balance $\ge 100$ XLM, DTI $\le 50\%$), users can register their readiness claim on-chain. The contract enforces a 30-day cooldown to prevent spam.
 - **Contract Error Handling**: Displays rich inline errors for `AlreadyRegistered` (cooldown active), `ThresholdNotMet` (stats failed checks), and `Unauthorized` (user signature declined).
 - **Live Contract Event Feed**: A dedicated dashboard panel polling the Soroban RPC API to stream new contract events (`claim_registered` topic) in real-time.
