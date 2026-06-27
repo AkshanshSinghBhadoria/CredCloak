@@ -1,5 +1,7 @@
 # CredCloak 🛡️ | Stellar Journey to Mastery
 
+[![CredCloak CI](https://github.com/AkshanshSinghBhadoria/CredCloak/actions/workflows/ci.yml/badge.svg)](https://github.com/AkshanshSinghBhadoria/CredCloak/actions)
+
 🌐 **Live Deployed App**: [cred-cloak.vercel.app](https://cred-cloak.vercel.app)
 
 **CredCloak** is a privacy-first loan readiness protocol on Stellar. It analyzes on-chain transaction history to compute and visualize creditworthiness metrics—such as average balance, inflows, outflows, and debt-to-income (DTI) ratio—empowering users to preview their credit health before generating private zero-knowledge proofs in future versions.
@@ -18,7 +20,7 @@ This release implements the core data ingestion, analysis, and transactional fou
 
 ---
 
-## 🟡 Level 2 - YELLOW BELT (SUBMISSION)
+## 🟡 Level 2 - YELLOW BELT
 
 This release implements the Proof Registry smart contract on-chain and integrates it dynamically with the dashboard:
 - **Proof Registry Soroban Contract**: A Rust Soroban contract deployed to the Stellar Testnet.
@@ -30,6 +32,23 @@ This release implements the Proof Registry smart contract on-chain and integrate
 - **Contract Error Handling**: Displays rich inline errors for `AlreadyRegistered` (cooldown active), `ThresholdNotMet` (stats failed checks), and `Unauthorized` (user signature declined).
 - **Live Contract Event Feed**: A dedicated dashboard panel polling the Soroban RPC API to stream new contract events (`claim_registered` topic) in real-time.
 - **Inline Transaction Status Panel**: Visualizes signing, submission, and confirmation states with explorer links dynamically without page reloads.
+
+---
+
+## 🟠 Level 3 - ORANGE BELT (SUBMISSION)
+
+This release implements client-side zero-knowledge proof generation, a second smart contract (Loan Pool), inter-contract calls, and full mobile responsiveness:
+- **Noir ZK-Proof Circuit**: A Noir-compiled ZK circuit running inside the browser to prove average balance and DTI ratio constraints without revealing raw input parameters.
+- **ZK-Gated Micro-Loan Pool Soroban Contract**: Deployed to the Stellar Testnet.
+  * **Contract Address**: `CBX44C272X6X2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52`
+  * **WASM Upload Hash**: `a26cf2f6e9c8439b728838e48106e17b0c6cf90d52af7170f8c7b092a1dd640f`
+  * **Instantiation Hash**: `bbd3d4e79b1ebb855ae2248c688d1ed1efbbf3b5e1463a000ed5d3eafa01d290`
+  * **Contract Call (request_loan) Tx Hash**: `2fa84b8c66e2cbf159b3bbff8c035fa3de9c135efbe843232c66d2ab28383e20`
+- **Inter-Contract Gating**: The Loan Pool contract invokes the Registry contract via an on-chain inter-contract call to verify if the borrower has an active readiness claim before disbursing funds.
+- **Mobile Responsive Design**: Full touch-friendly responsive dashboard layout with sticky bottom mobile navigation bar, stacked charts, and card lists for activities.
+- **GitHub Actions CI/CD**: Automatic pipeline compiling and testing both Rust contracts and Next.js Jest tests on push/pull requests.
+- **WASM UltraHonk Fallback Engine**: Generates a valid mock proof if browser WASM runtime execution lacks specific COOP/COEP HTTP header constraints.
+- **Expanded Real-Time Events**: Streams `claim_zk_verified`, `loan_approved`, and `loan_repaid` events directly from both contracts to the Activity Stream.
 
 ---
 
@@ -50,18 +69,22 @@ This release implements the Proof Registry smart contract on-chain and integrate
 * Add event-polling hooks and render the on-chain live event feed.
 * [View Yellow Belt Documentation](./docs/YELLOW_BELT.md)
 
-### 🟠 Level 3: Orange Belt - ZK Proof Generation (Planned)
-* Compiling zero-knowledge circuits using Noir.
-* Generating client-side ZK proofs of average balance and DTI thresholds.
-* Gating smart contract interactions using on-chain verification.
+### 🟠 Level 3: Orange Belt - ZK Proof Generation (Completed)
+* Compile zero-knowledge circuits using Noir for average balance and DTI constraints.
+* Add client-side ZK proof generation flow with UltraHonk verification and local fallback capabilities.
+* Deploy a second contract (`CredCloakLoanPool`) gating micro-loans using inter-contract checks and ZK proof verification.
+* Implement a GitHub Actions CI/CD workflow validating linting, TS type-checking, Jest tests, and contract compilations.
+* Redesign dashboard UI to be fully mobile responsive with sticky bottom navigation and stacked cards.
+* [View Orange Belt Documentation](./docs/ORANGE_BELT.md)
 
 ---
 
 ## 🏗️ Technical Architecture
-CredCloak follows a robust three-layered client-side approach:
+CredCloak follows a robust multi-layered client-side approach:
 1. **Horizon Integration**: Reading native balances and payment records asynchronously from Horizon.
 2. **Analysis Hook Engine**: Client-side filtering, time-window computations, and timeline balance reconstructions.
-3. **Non-Custodial Interface**: Standardized wallet connectivity and secure XDR transaction building.
+3. **ZK-Prover Engine**: Local compilation, witness generation, and UltraHonk proving directly in the browser via Noir.
+4. **Non-Custodial Interface**: Standardized wallet connectivity and secure XDR transaction building.
 - [Full ARCHITECTURE.md](./docs/ARCHITECTURE.md)
 
 ---
