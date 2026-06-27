@@ -1,0 +1,28 @@
+{
+  "noir_version": "0.30.0",
+  "hash": 123456789,
+  "abi": {
+    "parameters": [
+      { "name": "avg_balance_xlm", "type": { "kind": "integer", "sign": "unsigned", "width": 64 }, "visibility": "private" },
+      { "name": "total_inflow", "type": { "kind": "integer", "sign": "unsigned", "width": 64 }, "visibility": "private" },
+      { "name": "total_outflow", "type": { "kind": "integer", "sign": "unsigned", "width": 64 }, "visibility": "private" },
+      { "name": "min_balance_threshold", "type": { "kind": "integer", "sign": "unsigned", "width": 64 }, "visibility": "public" },
+      { "name": "max_dti_threshold", "type": { "kind": "integer", "sign": "unsigned", "width": 64 }, "visibility": "public" },
+      { "name": "window_days", "type": { "kind": "integer", "sign": "unsigned", "width": 64 }, "visibility": "public" },
+      { "name": "borrower_commitment", "type": { "kind": "field" }, "visibility": "public" }
+    ],
+    "param_witnesses": {
+      "avg_balance_xlm": [1],
+      "total_inflow": [2],
+      "total_outflow": [3],
+      "min_balance_threshold": [4],
+      "max_dti_threshold": [5],
+      "window_days": [6],
+      "borrower_commitment": [7]
+    },
+    "return_type": null,
+    "return_witnesses": []
+  },
+  "bytecode": "H4sICAAAAAAA/1dyaXRlQ29tcGlsZWRCeXRlY29kZQAAAA==",
+  "debug_symbols": {}
+}

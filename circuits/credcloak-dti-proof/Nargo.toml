@@ -1,0 +1,7 @@
+[package]
+name = "credcloak_dti_proof"
+type = "bin"
+authors = ["CredCloak"]
+compiler_version = ">=0.30.0"
+
+[dependencies]
