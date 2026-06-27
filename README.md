@@ -1,5 +1,7 @@
 # CredCloak 🛡️ | Stellar Journey to Mastery
 
+🌐 **Live Deployed App**: [cred-cloak.vercel.app](https://cred-cloak.vercel.app)
+
 **CredCloak** is a privacy-first loan readiness protocol on Stellar. It analyzes on-chain transaction history to compute and visualize creditworthiness metrics—such as average balance, inflows, outflows, and debt-to-income (DTI) ratio—empowering users to preview their credit health before generating private zero-knowledge proofs in future versions.
 
 ---
