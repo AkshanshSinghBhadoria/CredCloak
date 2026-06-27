@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
@@ -15,6 +15,10 @@ import { useFinancialStats } from '@/hooks/useFinancialStats';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useWallet } from '@/hooks/useWallet';
 import { formatXLM, truncateAddress } from '@/lib/financial';
+import { ContractPanel } from '@/components/ContractPanel';
+import { EventFeed } from '@/components/EventFeed';
+import { fetchActiveClaim, fetchTotalClaims, registerReadinessClaim } from '@/lib/contract';
+import { ReadinessClaim, TxStatus } from '@/lib/types';
 
 const tabs = [
   { id: 'overview', label: 'Overview' },
@@ -31,6 +35,86 @@ export default function DashboardPage() {
   const { stats, loanReadiness, windowDays, setWindowDays } = useFinancialStats(transactions, currentBalance);
 
   const [activeTab, setActiveTab] = useState<typeof tabs[number]['id']>('overview');
+
+  const [activeClaim, setActiveClaim] = useState<ReadinessClaim | null>(null);
+  const [totalClaims, setTotalClaims] = useState<number | null>(null);
+  const [isLoadingOnChain, setIsLoadingOnChain] = useState(false);
+  const [txStatus, setTxStatus] = useState<TxStatus>('idle');
+  const [txHash, setTxHash] = useState<string | undefined>(undefined);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [explorerUrl, setExplorerUrl] = useState<string | undefined>(undefined);
+
+  const loadOnChainData = useCallback(async () => {
+    if (!walletState.address) return;
+    setIsLoadingOnChain(true);
+    try {
+      const [total, active] = await Promise.all([
+        fetchTotalClaims(),
+        fetchActiveClaim(walletState.address),
+      ]);
+      setTotalClaims(total);
+      setActiveClaim(active);
+    } catch (err) {
+      console.warn('Failed loading on-chain contract stats:', err);
+    } finally {
+      setIsLoadingOnChain(false);
+    }
+  }, [walletState.address]);
+
+  useEffect(() => {
+    loadOnChainData();
+  }, [loadOnChainData]);
+
+  const isAvgBalancePassing = stats.averageBalance >= 100;
+  const isDtiPassing = stats.dtiRatio <= 50 && stats.dtiRatio >= 0;
+  const thresholdsMet = isAvgBalancePassing && isDtiPassing;
+
+  const hasActiveClaim = !!activeClaim && activeClaim.timestamp > 0;
+  
+  let cooldownDaysLeft = 0;
+  if (hasActiveClaim && activeClaim) {
+    const elapsedSeconds = Date.now() / 1000 - activeClaim.timestamp;
+    const cooldownSeconds = 30 * 24 * 60 * 60;
+    if (elapsedSeconds < cooldownSeconds) {
+      cooldownDaysLeft = Math.ceil((cooldownSeconds - elapsedSeconds) / (24 * 60 * 60));
+    }
+  }
+
+  const isClaimActive = hasActiveClaim && cooldownDaysLeft > 0;
+  const isRegisterDisabled = !walletState.isConnected || !walletState.address || !thresholdsMet || isClaimActive || txStatus === 'signing' || txStatus === 'submitting';
+
+  const handleRegisterClaim = async () => {
+    if (!walletState.isConnected || !walletState.address || !thresholdsMet || isClaimActive) return;
+
+    setTxStatus('signing');
+    setErrorMessage(undefined);
+    setTxHash(undefined);
+    setExplorerUrl(undefined);
+
+    try {
+      const result = await registerReadinessClaim(
+        walletState.address,
+        stats,
+        async (xdr) => {
+          setTxStatus('signing');
+          return await signTransaction(xdr);
+        }
+      );
+
+      if (result.success) {
+        setTxStatus('confirmed');
+        setTxHash(result.txHash);
+        setExplorerUrl(result.explorerUrl);
+        await loadOnChainData();
+      } else {
+        setTxStatus('failed');
+        setErrorMessage(result.errorMessage || 'Contract invocation failed.');
+      }
+    } catch (err: any) {
+      setTxStatus('failed');
+      setErrorMessage(err.message || 'An unexpected error occurred.');
+    }
+  };
 
   useEffect(() => {
     if (!walletState.isConnected) router.replace('/');
@@ -172,7 +256,29 @@ export default function DashboardPage() {
                 <Card className="p-6">
                   <DTIGauge dtiRatio={stats.dtiRatio} />
                 </Card>
-                <LoanReadinessSnapshot indicators={loanReadiness} />
+                <LoanReadinessSnapshot
+                  indicators={loanReadiness}
+                  onRegisterClick={handleRegisterClaim}
+                  isRegisterDisabled={isRegisterDisabled}
+                  isClaimActive={isClaimActive}
+                  cooldownDaysLeft={cooldownDaysLeft}
+                />
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <ContractPanel
+                  walletState={walletState}
+                  stats={stats}
+                  totalClaims={totalClaims}
+                  activeClaim={activeClaim}
+                  isLoadingStatus={isLoadingOnChain}
+                  isClaimActive={isClaimActive}
+                  cooldownDaysLeft={cooldownDaysLeft}
+                  onRegister={handleRegisterClaim}
+                  txStatus={txStatus}
+                  thresholdsMet={thresholdsMet}
+                />
+                <EventFeed />
               </div>
             </div>
           )}

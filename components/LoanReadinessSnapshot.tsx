@@ -8,7 +8,19 @@ const statusMap = {
   fail: { icon: 'X', tone: 'red' as const, className: 'text-red-300' },
 };
 
-export function LoanReadinessSnapshot({ indicators }: { indicators: LoanReadinessIndicator[] }) {
+export function LoanReadinessSnapshot({
+  indicators,
+  onRegisterClick,
+  isRegisterDisabled,
+  isClaimActive,
+  cooldownDaysLeft,
+}: {
+  indicators: LoanReadinessIndicator[];
+  onRegisterClick?: () => void;
+  isRegisterDisabled?: boolean;
+  isClaimActive?: boolean;
+  cooldownDaysLeft?: number;
+}) {
   return (
     <Card className="p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -39,14 +51,29 @@ export function LoanReadinessSnapshot({ indicators }: { indicators: LoanReadines
         })}
       </div>
       <p className="mt-5 text-sm text-slate-400">ZK proof generation. This is a preview of the data your proof will use.</p>
-      <button
-        type="button"
-        disabled
-        title="ZK proof generation is coming in a future update"
-        className="mt-5 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 font-semibold text-slate-500"
-      >
-        Generate ZK Proof - Comming Soon
-      </button>
+      
+      <div className="mt-5 flex flex-col sm:flex-row gap-3">
+        {onRegisterClick && (
+          <button
+            type="button"
+            onClick={onRegisterClick}
+            disabled={isRegisterDisabled}
+            className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white hover:bg-indigo-500 transition disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isClaimActive 
+              ? `Claim Active (${cooldownDaysLeft}d Cooldown)` 
+              : 'Register Readiness Claim'}
+          </button>
+        )}
+        <button
+          type="button"
+          disabled
+          title="ZK proof generation is coming in a future update"
+          className="flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 font-semibold text-slate-500"
+        >
+          Generate ZK Proof - Coming Soon
+        </button>
+      </div>
     </Card>
   );
 }

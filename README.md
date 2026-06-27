@@ -1,10 +1,10 @@
-# CredCloak 🛡️ | Stellar Journey to Mastery - Level 1
+# CredCloak 🛡️ | Stellar Journey to Mastery
 
 **CredCloak** is a privacy-first loan readiness protocol on Stellar. It analyzes on-chain transaction history to compute and visualize creditworthiness metrics—such as average balance, inflows, outflows, and debt-to-income (DTI) ratio—empowering users to preview their credit health before generating private zero-knowledge proofs in future versions.
 
 ---
 
-## ⚪ Level 1 - WHITE BELT (SUBMISSION)
+## ⚪ Level 1 - WHITE BELT
 
 This release implements the core data ingestion, analysis, and transactional foundation on the Stellar Testnet:
 - **Multi-Wallet Integration**: Seamless connection with Freighter, Albedo, xBull, and LOBSTR extensions/apps via Stellar Wallets Kit.
@@ -16,9 +16,23 @@ This release implements the core data ingestion, analysis, and transactional fou
 
 ---
 
+## 🟡 Level 2 - YELLOW BELT (SUBMISSION)
+
+This release implements the Proof Registry smart contract on-chain and integrates it dynamically with the dashboard:
+- **Proof Registry Soroban Contract**: A Rust Soroban contract deployed to the Stellar Testnet.
+  * **Contract Address**: `CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET`
+  * **WASM Upload Hash**: `212cf2f6e9c8439b728838e48106e17b0c6cf90d52af7170f8c7b092a1dd640f`
+  * **Instantiation Hash**: `ffc3d4e79b1ebb855ae2248c688d1ed1efbbf3b5e1463a000ed5d3eafa01d290`
+- **On-Chain Readiness Claim**: Gated by eligibility checks (average balance $\ge 100$ XLM, DTI $\le 50\%$), users can register their readiness claim on-chain. The contract enforces a 30-day cooldown to prevent spam.
+- **Contract Error Handling**: Displays rich inline errors for `AlreadyRegistered` (cooldown active), `ThresholdNotMet` (stats failed checks), and `Unauthorized` (user signature declined).
+- **Live Contract Event Feed**: A dedicated dashboard panel polling the Soroban RPC API to stream new contract events (`claim_registered` topic) in real-time.
+- **Inline Transaction Status Panel**: Visualizes signing, submission, and confirmation states with explorer links dynamically without page reloads.
+
+---
+
 ## 🚀 Mastery Journey
 
-### ⚪ Level 1: White Belt - Ingestion & In-Browser Analysis (Current)
+### ⚪ Level 1: White Belt - Ingestion & In-Browser Analysis (Completed)
 * Project scaffolding and environment setup.
 * Multi-wallet connection (Freighter, Albedo, xBull, LOBSTR) and session state.
 * Horizon API integration for payment history ingestion and statistics computation.
@@ -26,10 +40,12 @@ This release implements the core data ingestion, analysis, and transactional fou
 * Automated Friendbot funding and non-custodial transaction submission.
 * [View White Belt Documentation](./docs/WHITE_BELT.md)
 
-### 🟡 Level 2: Yellow Belt - Smart Contract Escrow (Planned)
-* First deployment of Soroban Smart Contracts.
-* Implementing deposit pools and loan contract logic.
-* On-chain state tracking of loan applications.
+### 🟡 Level 2: Yellow Belt - Smart Contract Proof Registry (Completed)
+* Write and build the `CredCloakRegistry` Soroban smart contract in Rust.
+* Deploy the contract to Stellar Testnet and invoke read-only methods.
+* Implement non-custodial contract call execution and transaction status tracking.
+* Add event-polling hooks and render the on-chain live event feed.
+* [View Yellow Belt Documentation](./docs/YELLOW_BELT.md)
 
 ### 🟠 Level 3: Orange Belt - ZK Proof Generation (Planned)
 * Compiling zero-knowledge circuits using Noir.

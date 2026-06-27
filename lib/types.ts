@@ -48,3 +48,40 @@ export interface TransactionResult {
   error?: string;
   stellarLabUrl?: string;
 }
+
+export interface ReadinessClaim {
+  borrower: string;
+  statsHash: string;
+  timestamp: number;
+  dtiPass: boolean;
+  balancePass: boolean;
+  historyPass: boolean;
+}
+
+export type ContractError = 
+  | 'AlreadyRegistered' 
+  | 'ThresholdNotMet' 
+  | 'Unauthorized'
+  | 'ContractCallFailed'
+  | 'WalletNotConnected';
+
+export interface ClaimResult {
+  success: boolean;
+  txHash?: string;
+  timestamp?: number;
+  error?: ContractError;
+  errorMessage?: string;
+  explorerUrl?: string;
+}
+
+export type TxStatus = 'idle' | 'signing' | 'submitting' | 'confirmed' | 'failed';
+
+export interface ContractEvent {
+  id: string;
+  type: 'claim_registered';
+  borrower: string;
+  timestamp: number;
+  dtiPass: boolean;
+  balancePass: boolean;
+  ledger: number;
+}
