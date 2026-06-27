@@ -13,9 +13,9 @@ export function EventFeed() {
       case 'claim_registered':
         return <Badge tone="indigo" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">claim_reg</Badge>;
       case 'claim_zk_verified':
-        return <Badge tone="emerald" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">zk_verified 🛡️</Badge>;
+        return <Badge tone="green" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">zk_verified 🛡️</Badge>;
       case 'loan_approved':
-        return <Badge tone="emerald" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">loan_ok 💰</Badge>;
+        return <Badge tone="green" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">loan_ok 💰</Badge>;
       case 'loan_rejected':
         return <Badge tone="red" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">loan_fail ✗</Badge>;
       case 'loan_repaid':

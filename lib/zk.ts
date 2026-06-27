@@ -41,12 +41,12 @@ export async function generateDTIProof(
 
   try {
     // Dynamic import to avoid breaking build steps if packages are not fully compatible
-    const { Noir } = await import('@noir-lang/noir_js');
+    const NoirClass = (await import('@noir-lang/noir_js')).Noir;
     const { UltraHonkBackend } = await import('@aztec/bb.js');
     const circuit = await import('@/circuits/credcloak_dti_proof.json');
 
-    const noir = new Noir(circuit as any);
-    const backend = new UltraHonkBackend(circuit.bytecode);
+    const noir = new (NoirClass as any)(circuit, undefined as any);
+    const backend = new (UltraHonkBackend as any)(circuit.bytecode);
 
     // Generate witness
     const { witness } = await noir.execute(inputs as any);
@@ -89,7 +89,7 @@ async function computeAddressCommitment(address: string): Promise<string> {
   }
   const encoder = new TextEncoder();
   const data = encoder.encode(address);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data as any);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }

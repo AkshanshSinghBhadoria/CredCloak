@@ -1,3 +1,4 @@
+/// <reference types="@testing-library/jest-dom" />
 import { render, screen } from '@testing-library/react';
 import { LoanReadinessSnapshot } from '@/components/LoanReadinessSnapshot';
 import { LoanReadinessIndicator } from '@/lib/types';

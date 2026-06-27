@@ -39,7 +39,7 @@ async function computeSha256(bytes: Uint8Array): Promise<Uint8Array> {
     const hash = require('crypto').createHash('sha256').update(buffer).digest();
     return new Uint8Array(hash);
   }
-  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes as any);
   return new Uint8Array(hashBuffer);
 }
 
