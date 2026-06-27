@@ -19,6 +19,9 @@ import { ContractPanel } from '@/components/ContractPanel';
 import { EventFeed } from '@/components/EventFeed';
 import { fetchActiveClaim, fetchTotalClaims, registerReadinessClaim } from '@/lib/contract';
 import { ReadinessClaim, TxStatus } from '@/lib/types';
+import { ZKProofPanel } from '@/components/ZKProofPanel';
+import { LoanPoolPanel } from '@/components/LoanPoolPanel';
+import { MobileNav } from '@/components/MobileNav';
 
 const tabs = [
   { id: 'overview', label: 'Overview' },
@@ -161,6 +164,7 @@ export default function DashboardPage() {
   const refreshAfterSend = async () => {
     await refreshBalance();
     await refreshTransactions();
+    await loadOnChainData();
   };
 
   return (
@@ -200,26 +204,9 @@ export default function DashboardPage() {
               <WalletConnect walletState={walletState} connect={connect} disconnect={disconnect} isConnecting={isConnecting} redirectOnConnect={false} />
             </div>
           </div>
-          
-          {/* Mobile Navigation Tabs */}
-          <div className="mt-4 flex overflow-x-auto gap-2 border-t border-slate-800/55 pt-3 lg:hidden">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-900 text-slate-400 hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
         </header>
 
-        <div className="mx-auto max-w-7xl px-5 py-8">
+        <div className="mx-auto max-w-7xl px-5 py-8 pb-24 lg:pb-8">
           {activeTab === 'overview' && (
             <div className="animate-rise space-y-6">
               <div className="flex flex-wrap items-end justify-between gap-5">
@@ -284,6 +271,22 @@ export default function DashboardPage() {
                   txStatus={txStatus}
                   thresholdsMet={thresholdsMet}
                 />
+                <ZKProofPanel
+                  stats={stats}
+                  borrowerAddress={walletState.address}
+                  signTransaction={signTransaction}
+                  onProofVerified={loadOnChainData}
+                  claimRegistered={hasActiveClaim}
+                />
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <LoanPoolPanel
+                  walletState={walletState}
+                  signTransaction={signTransaction}
+                  zkVerified={!!activeClaim?.zkVerified}
+                  onLoanAction={refreshAfterSend}
+                />
                 <EventFeed />
               </div>
             </div>
@@ -306,6 +309,8 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </main>
   );
 }

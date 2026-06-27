@@ -103,7 +103,8 @@ export function TransactionHistory({ transactions, isLoading, address, onFunded 
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="bg-slate-950/50 text-xs uppercase text-slate-500">
                 <tr>
@@ -135,6 +136,38 @@ export function TransactionHistory({ transactions, isLoading, address, onFunded 
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Card List View */}
+          <div className="block md:hidden divide-y divide-slate-900">
+            {visible.map((tx) => (
+              <div
+                key={tx.id}
+                className={`p-4 ${tx.type === 'received' ? 'border-l-4 border-l-emerald-400/70 bg-emerald-500/[0.02]' : 'border-l-4 border-l-red-400/70 bg-red-500/[0.02]'}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500">{new Date(tx.createdAt).toLocaleDateString()}</span>
+                  <Badge tone={tx.type === 'received' ? 'green' : 'red'}>{tx.type}</Badge>
+                </div>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="text-sm font-semibold text-slate-400">Amount</span>
+                  <span className="font-display font-bold text-white text-base">{Number(tx.amount).toFixed(2)} XLM</span>
+                </div>
+                <div className="mt-1.5 flex items-baseline justify-between text-xs">
+                  <span className="text-slate-500">Counterparty</span>
+                  <button type="button" onClick={() => navigator.clipboard?.writeText(tx.counterparty)} className="font-mono text-indigo-300" title="Copy full address">
+                    {truncateAddress(tx.counterparty, 5)}
+                  </button>
+                </div>
+                <div className="mt-1 flex items-baseline justify-between text-xs">
+                  <span className="text-slate-500">TX Hash</span>
+                  <a href={getStellarLabUrl(tx.hash)} target="_blank" rel="noreferrer" className="font-mono text-indigo-300">
+                    {truncateHash(tx.hash, 6)}
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+
           <div className="flex items-center justify-between border-t border-cloak-border p-4 text-sm text-slate-400">
             <span>Page {page} of {pageCount}</span>
             <div className="flex gap-2">
