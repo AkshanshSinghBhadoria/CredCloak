@@ -5,7 +5,7 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 import { ContractEvent } from '@/lib/types';
 
 const SOROBAN_RPC = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || 'CAS3D5Y4CQCXR3B7GOAOZFFJZUY267C7ND34SIEIJTTND2NDTT2NCTGG';
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || 'CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET';
 const POLL_INTERVAL = 8000; // 8 seconds
 
 export function useContractEvents() {

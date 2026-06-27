@@ -3,7 +3,7 @@ import { ClaimResult, ContractError, ReadinessClaim } from './types';
 import { FinancialStats } from './types';
 
 // Use env variable with a valid dummy contract address fallback to avoid constructor crashes on boot
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || 'CAS3D5Y4CQCXR3B7GOAOZFFJZUY267C7ND34SIEIJTTND2NDTT2NCTGG';
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || 'CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET';
 const SOROBAN_RPC = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
 const NETWORK_PASSPHRASE = StellarSdk.Networks.TESTNET;
 const EXPLORER_BASE = 'https://stellar.expert/explorer/testnet/tx';
