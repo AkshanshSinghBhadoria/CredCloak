@@ -6,6 +6,7 @@ import { ContractEvent } from '@/lib/types';
 
 const SOROBAN_RPC = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || 'CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET';
+const LOAN_POOL_ADDRESS = process.env.NEXT_PUBLIC_LOAN_POOL_ADDRESS || 'CBX44C272X6X2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52';
 const POLL_INTERVAL = 8000; // 8 seconds
 
 export function useContractEvents() {
@@ -14,7 +15,12 @@ export function useContractEvents() {
   const [lastLedger, setLastLedger] = useState<number | null>(null);
 
   const fetchEvents = useCallback(async () => {
-    if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS.startsWith('CXXXX')) return;
+    const contractIds = [];
+    if (CONTRACT_ADDRESS && !CONTRACT_ADDRESS.startsWith('CXXXX')) contractIds.push(CONTRACT_ADDRESS);
+    if (LOAN_POOL_ADDRESS && !LOAN_POOL_ADDRESS.startsWith('CXXXX')) contractIds.push(LOAN_POOL_ADDRESS);
+
+    if (contractIds.length === 0) return;
+
     try {
       const server = new StellarSdk.rpc.Server(SOROBAN_RPC);
 
@@ -27,27 +33,65 @@ export function useContractEvents() {
         filters: [
           {
             type: 'contract',
-            contractIds: [CONTRACT_ADDRESS],
+            contractIds: contractIds,
             topics: [
-              ['*', '*'], // match claim + registered topics
+              ['*', '*'], // match topics like claim registered or loan approved
             ],
           },
         ],
-        limit: 20,
+        limit: 30,
       });
 
       if (result.events && result.events.length > 0) {
         const newEvents: ContractEvent[] = result.events.map((e: any) => {
           let borrower = 'Unknown';
-          let dtiPass = true;
-          let balancePass = true;
+          let dtiPass = undefined;
+          let balancePass = undefined;
+          let amount = undefined;
+          let eventType: ContractEvent['type'] = 'claim_registered';
+
           try {
+            const top1 = e.topic[0]?.sym()?.toString() || '';
+            const top2 = e.topic[1]?.sym()?.toString() || '';
+
             const val = e.value;
             const vec = val.vec();
-            if (vec && vec.length >= 4) {
-              borrower = vec[0].address()?.toString() || 'Unknown';
-              dtiPass = vec[2].b();
-              balancePass = vec[3].b();
+
+            if (top1 === 'claim') {
+              if (top2 === 'registered') {
+                eventType = 'claim_registered';
+                if (vec && vec.length >= 4) {
+                  borrower = vec[0].address()?.toString() || 'Unknown';
+                  dtiPass = vec[2].b();
+                  balancePass = vec[3].b();
+                }
+              } else if (top2 === 'zk_verified') {
+                eventType = 'claim_zk_verified';
+                if (vec && vec.length >= 2) {
+                  borrower = vec[0].address()?.toString() || 'Unknown';
+                }
+              }
+            } else if (top1 === 'loan') {
+              if (top2 === 'approved') {
+                eventType = 'loan_approved';
+                if (vec && vec.length >= 3) {
+                  borrower = vec[0].address()?.toString() || 'Unknown';
+                  const amtBig = BigInt(vec[1].i128()?.lo.toString() || 0);
+                  amount = (Number(amtBig) / 10_000_000).toFixed(2);
+                }
+              } else if (top2 === 'rejected') {
+                eventType = 'loan_rejected';
+                if (vec && vec.length >= 1) {
+                  borrower = vec[0].address()?.toString() || 'Unknown';
+                }
+              } else if (top2 === 'repaid') {
+                eventType = 'loan_repaid';
+                if (vec && vec.length >= 3) {
+                  borrower = vec[0].address()?.toString() || 'Unknown';
+                  const amtBig = BigInt(vec[1].i128()?.lo.toString() || 0);
+                  amount = (Number(amtBig) / 10_000_000).toFixed(2);
+                }
+              }
             }
           } catch (err) {
             console.warn('Failed parsing event ScVal values:', err);
@@ -55,11 +99,12 @@ export function useContractEvents() {
 
           return {
             id: e.id,
-            type: 'claim_registered',
+            type: eventType,
             borrower,
             timestamp: Date.now(),
             dtiPass,
             balancePass,
+            amount,
             ledger: e.ledger,
           };
         });

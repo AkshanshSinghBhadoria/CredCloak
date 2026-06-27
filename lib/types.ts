@@ -56,6 +56,8 @@ export interface ReadinessClaim {
   dtiPass: boolean;
   balancePass: boolean;
   historyPass: boolean;
+  zkVerified?: boolean;      // NEW
+  proofHash?: string;        // NEW
 }
 
 export type ContractError = 
@@ -74,14 +76,25 @@ export interface ClaimResult {
   explorerUrl?: string;
 }
 
-export type TxStatus = 'idle' | 'signing' | 'submitting' | 'confirmed' | 'failed';
+export type TxStatus = 'idle' | 'signing' | 'submitting' | 'confirmed' | 'failed' | 'proving'; // Added proving state
 
 export interface ContractEvent {
   id: string;
-  type: 'claim_registered';
+  type: 'claim_registered' | 'claim_zk_verified' | 'loan_approved' | 'loan_rejected' | 'loan_repaid'; // Expanded types
   borrower: string;
   timestamp: number;
-  dtiPass: boolean;
-  balancePass: boolean;
+  dtiPass?: boolean;
+  balancePass?: boolean;
+  amount?: string; // NEW: loan amount
   ledger: number;
 }
+
+export type LoanStatus = 'Pending' | 'Approved' | 'Rejected' | 'Repaid';
+
+export interface LoanRequest {
+  borrower: string;
+  amount: string;          // in XLM (string to handle large decimals nicely)
+  timestamp: number;
+  status: LoanStatus;
+}
+

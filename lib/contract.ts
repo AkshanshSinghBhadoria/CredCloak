@@ -1,18 +1,46 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
-import { ClaimResult, ContractError, ReadinessClaim } from './types';
+import { ClaimResult, ContractError, ReadinessClaim, LoanRequest, LoanStatus } from './types';
 import { FinancialStats } from './types';
 
-// Use env variable with a valid dummy contract address fallback to avoid constructor crashes on boot
+// Env variables with fallback to avoid crashes on boot
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || 'CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET';
+const LOAN_POOL_ADDRESS = process.env.NEXT_PUBLIC_LOAN_POOL_ADDRESS || 'CBX44C272X6X2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52'; // Deployed in this level
 const SOROBAN_RPC = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
 const NETWORK_PASSPHRASE = StellarSdk.Networks.TESTNET;
 const EXPLORER_BASE = 'https://stellar.expert/explorer/testnet/tx';
 
-// Hash the financial stats for on-chain storage (no raw numbers on-chain)
+// Hash the financial stats for on-chain storage
 function hashStats(stats: FinancialStats): string {
   const data = `${stats.averageBalance.toFixed(2)}:${stats.dtiRatio.toFixed(2)}:${stats.windowDays}`;
-  // Simple deterministic hash for demo
   return btoa(data).slice(0, 32);
+}
+
+// Convert big int to i128 ScVal
+function bigIntToI128ScVal(value: bigint): StellarSdk.xdr.ScVal {
+  try {
+    return StellarSdk.nativeToScVal(value, { type: 'i128' });
+  } catch {
+    const lo = value & BigInt('0xffffffffffffffff');
+    const hi = value >> BigInt(64);
+    return StellarSdk.xdr.ScVal.scvI128(
+      new StellarSdk.xdr.Int128Parts({
+        lo: StellarSdk.xdr.Uint64.fromString(lo.toString()),
+        hi: StellarSdk.xdr.Int64.fromString(hi.toString())
+      })
+    );
+  }
+}
+
+// Hash proof bytes using SHA-256 for upgrade
+async function computeSha256(bytes: Uint8Array): Promise<Uint8Array> {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    // Fallback for node environment / tests
+    const buffer = Buffer.from(bytes);
+    const hash = require('crypto').createHash('sha256').update(buffer).digest();
+    return new Uint8Array(hash);
+  }
+  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+  return new Uint8Array(hashBuffer);
 }
 
 export async function registerReadinessClaim(
@@ -35,7 +63,6 @@ export async function registerReadinessClaim(
     const contract = new StellarSdk.Contract(CONTRACT_ADDRESS);
     const statsHash = hashStats(stats);
 
-    // Build the contract call transaction
     const tx = new StellarSdk.TransactionBuilder(account, {
       fee: StellarSdk.BASE_FEE,
       networkPassphrase: NETWORK_PASSPHRASE,
@@ -53,7 +80,6 @@ export async function registerReadinessClaim(
       .setTimeout(30)
       .build();
 
-    // Simulate first (catches errors cheaply)
     const simResult = await server.simulateTransaction(tx);
     if (StellarSdk.rpc.Api.isSimulationError(simResult)) {
       const errCode = parseContractError(simResult.error);
@@ -64,14 +90,9 @@ export async function registerReadinessClaim(
       };
     }
 
-    // Assemble + sign + submit
-    const preparedTx = StellarSdk.rpc.assembleTransaction(
-      tx, simResult
-    ).build();
+    const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
     const signedXDR = await signTransaction(preparedTx.toXDR());
-    const signedTx = StellarSdk.TransactionBuilder.fromXDR(
-      signedXDR, NETWORK_PASSPHRASE
-    );
+    const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
     const submitResult = await server.sendTransaction(signedTx);
 
     if (submitResult.status === 'ERROR') {
@@ -82,7 +103,6 @@ export async function registerReadinessClaim(
       };
     }
 
-    // Poll for confirmation
     const hash = submitResult.hash;
     const confirmed = await pollForConfirmation(server, hash);
     if (!confirmed) {
@@ -101,8 +121,7 @@ export async function registerReadinessClaim(
     };
 
   } catch (err: any) {
-    // Network / wallet errors
-    if (err.message?.includes('User declined') || err.message?.includes('declined') || err.message?.includes('rejected')) {
+    if (err.message?.includes('declined') || err.message?.includes('rejected')) {
       return {
         success: false,
         error: 'Unauthorized',
@@ -114,6 +133,309 @@ export async function registerReadinessClaim(
       error: 'ContractCallFailed',
       errorMessage: err.message ?? 'Unexpected error. Please try again.',
     };
+  }
+}
+
+export async function upgradeClaimToZKVerified(
+  borrowerAddress: string,
+  proofBytes: Uint8Array,
+  signTransaction: (xdr: string) => Promise<string>
+): Promise<ClaimResult> {
+  try {
+    if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS.startsWith('CXXXX')) {
+      return {
+        success: false,
+        error: 'ContractCallFailed',
+        errorMessage: 'Contract not configured.',
+      };
+    }
+
+    const server = new StellarSdk.rpc.Server(SOROBAN_RPC);
+    const account = await server.getAccount(borrowerAddress);
+    const contract = new StellarSdk.Contract(CONTRACT_ADDRESS);
+
+    const hash = await computeSha256(proofBytes);
+
+    const tx = new StellarSdk.TransactionBuilder(account, {
+      fee: StellarSdk.BASE_FEE,
+      networkPassphrase: NETWORK_PASSPHRASE,
+    })
+      .addOperation(
+        contract.call(
+          'upgrade_to_zk_verified',
+          StellarSdk.Address.fromString(borrowerAddress).toScVal(),
+          StellarSdk.xdr.ScVal.scvBytes(Buffer.from(hash)),
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    const simResult = await server.simulateTransaction(tx);
+    if (StellarSdk.rpc.Api.isSimulationError(simResult)) {
+      const errCode = parseContractError(simResult.error);
+      return {
+        success: false,
+        error: errCode,
+        errorMessage: getErrorMessage(errCode),
+      };
+    }
+
+    const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
+    const signedXDR = await signTransaction(preparedTx.toXDR());
+    const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
+    const submitResult = await server.sendTransaction(signedTx);
+
+    if (submitResult.status === 'ERROR') {
+      return { success: false, error: 'ContractCallFailed', errorMessage: 'Transaction failed to submit.' };
+    }
+
+    const txHash = submitResult.hash;
+    const confirmed = await pollForConfirmation(server, txHash);
+    if (!confirmed) {
+      return { success: false, error: 'ContractCallFailed', errorMessage: 'Confirmation timed out.' };
+    }
+
+    return {
+      success: true,
+      txHash,
+      timestamp: Date.now(),
+      explorerUrl: `${EXPLORER_BASE}/${txHash}`,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: 'ContractCallFailed',
+      errorMessage: err.message ?? 'Failed to upgrade claim.',
+    };
+  }
+}
+
+export async function requestLoan(
+  borrowerAddress: string,
+  amountXlm: number,
+  proofBytes: Uint8Array,
+  publicInputs: string[],
+  signTransaction: (xdr: string) => Promise<string>
+): Promise<ClaimResult> {
+  try {
+    if (!LOAN_POOL_ADDRESS || LOAN_POOL_ADDRESS.startsWith('CXXXX')) {
+      return {
+        success: false,
+        error: 'ContractCallFailed',
+        errorMessage: 'Loan Pool contract address is not configured.',
+      };
+    }
+
+    const server = new StellarSdk.rpc.Server(SOROBAN_RPC);
+    const account = await server.getAccount(borrowerAddress);
+    const contract = new StellarSdk.Contract(LOAN_POOL_ADDRESS);
+
+    // Convert XLM to stroops (10^7)
+    const amountStroops = BigInt(Math.floor(amountXlm * 10_000_000));
+
+    // Clamp public inputs to u32 for safe passing to Vec<u32>
+    const u32s = publicInputs.map(val => {
+      try {
+        let num = val.startsWith('0x') ? BigInt(val) : BigInt(val);
+        return StellarSdk.xdr.ScVal.scvU32(Number(num & BigInt(0xffffffff)));
+      } catch {
+        return StellarSdk.xdr.ScVal.scvU32(0);
+      }
+    });
+
+    const tx = new StellarSdk.TransactionBuilder(account, {
+      fee: StellarSdk.BASE_FEE,
+      networkPassphrase: NETWORK_PASSPHRASE,
+    })
+      .addOperation(
+        contract.call(
+          'request_loan',
+          StellarSdk.Address.fromString(borrowerAddress).toScVal(),
+          bigIntToI128ScVal(amountStroops),
+          StellarSdk.xdr.ScVal.scvBytes(Buffer.from(proofBytes)),
+          StellarSdk.xdr.ScVal.scvVec(u32s),
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    const simResult = await server.simulateTransaction(tx);
+    if (StellarSdk.rpc.Api.isSimulationError(simResult)) {
+      const errCode = parsePoolError(simResult.error);
+      return {
+        success: false,
+        error: 'ContractCallFailed',
+        errorMessage: getPoolErrorMessage(errCode),
+      };
+    }
+
+    const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
+    const signedXDR = await signTransaction(preparedTx.toXDR());
+    const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
+    const submitResult = await server.sendTransaction(signedTx);
+
+    if (submitResult.status === 'ERROR') {
+      return { success: false, error: 'ContractCallFailed', errorMessage: 'Transaction submission failed.' };
+    }
+
+    const txHash = submitResult.hash;
+    const confirmed = await pollForConfirmation(server, txHash);
+    if (!confirmed) {
+      return { success: false, error: 'ContractCallFailed', errorMessage: 'Confirmation timed out.' };
+    }
+
+    return {
+      success: true,
+      txHash,
+      timestamp: Date.now(),
+      explorerUrl: `${EXPLORER_BASE}/${txHash}`,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: 'ContractCallFailed',
+      errorMessage: err.message ?? 'Failed to request loan.',
+    };
+  }
+}
+
+export async function repayLoan(
+  borrowerAddress: string,
+  amountXlm: number,
+  signTransaction: (xdr: string) => Promise<string>
+): Promise<ClaimResult> {
+  try {
+    if (!LOAN_POOL_ADDRESS || LOAN_POOL_ADDRESS.startsWith('CXXXX')) {
+      return {
+        success: false,
+        error: 'ContractCallFailed',
+        errorMessage: 'Loan Pool contract address is not configured.',
+      };
+    }
+
+    const server = new StellarSdk.rpc.Server(SOROBAN_RPC);
+    const account = await server.getAccount(borrowerAddress);
+    const contract = new StellarSdk.Contract(LOAN_POOL_ADDRESS);
+
+    // Convert XLM to stroops (10^7)
+    const amountStroops = BigInt(Math.floor(amountXlm * 10_000_000));
+
+    const tx = new StellarSdk.TransactionBuilder(account, {
+      fee: StellarSdk.BASE_FEE,
+      networkPassphrase: NETWORK_PASSPHRASE,
+    })
+      .addOperation(
+        contract.call(
+          'repay_loan',
+          StellarSdk.Address.fromString(borrowerAddress).toScVal(),
+          bigIntToI128ScVal(amountStroops),
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    const simResult = await server.simulateTransaction(tx);
+    if (StellarSdk.rpc.Api.isSimulationError(simResult)) {
+      const errCode = parsePoolError(simResult.error);
+      return {
+        success: false,
+        error: 'ContractCallFailed',
+        errorMessage: getPoolErrorMessage(errCode),
+      };
+    }
+
+    const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
+    const signedXDR = await signTransaction(preparedTx.toXDR());
+    const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
+    const submitResult = await server.sendTransaction(signedTx);
+
+    if (submitResult.status === 'ERROR') {
+      return { success: false, error: 'ContractCallFailed', errorMessage: 'Repayment transaction failed.' };
+    }
+
+    const txHash = submitResult.hash;
+    const confirmed = await pollForConfirmation(server, txHash);
+    if (!confirmed) {
+      return { success: false, error: 'ContractCallFailed', errorMessage: 'Repayment confirmation timed out.' };
+    }
+
+    return {
+      success: true,
+      txHash,
+      timestamp: Date.now(),
+      explorerUrl: `${EXPLORER_BASE}/${txHash}`,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: 'ContractCallFailed',
+      errorMessage: err.message ?? 'Failed to repay loan.',
+    };
+  }
+}
+
+export async function fetchLoan(
+  borrowerAddress: string
+): Promise<LoanRequest | null> {
+  try {
+    if (!LOAN_POOL_ADDRESS || LOAN_POOL_ADDRESS.startsWith('CXXXX')) return null;
+
+    const server = new StellarSdk.rpc.Server(SOROBAN_RPC);
+    const contract = new StellarSdk.Contract(LOAN_POOL_ADDRESS);
+    const keypair = StellarSdk.Keypair.random();
+    const account = new StellarSdk.Account(keypair.publicKey(), '0');
+
+    const tx = new StellarSdk.TransactionBuilder(account, {
+      fee: StellarSdk.BASE_FEE,
+      networkPassphrase: NETWORK_PASSPHRASE,
+    })
+      .addOperation(
+        contract.call(
+          'get_loan',
+          StellarSdk.Address.fromString(borrowerAddress).toScVal()
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    const result = await server.simulateTransaction(tx);
+    if (StellarSdk.rpc.Api.isSimulationSuccess(result) && result.result) {
+      return parseLoanFromScVal(result.result.retval);
+    }
+    return null;
+  } catch (err) {
+    console.warn('Failed to fetch loan details:', err);
+    return null;
+  }
+}
+
+export async function fetchPoolBalance(): Promise<number> {
+  try {
+    if (!LOAN_POOL_ADDRESS || LOAN_POOL_ADDRESS.startsWith('CXXXX')) return 0;
+
+    const server = new StellarSdk.rpc.Server(SOROBAN_RPC);
+    const contract = new StellarSdk.Contract(LOAN_POOL_ADDRESS);
+    const keypair = StellarSdk.Keypair.random();
+    const account = new StellarSdk.Account(keypair.publicKey(), '0');
+
+    const tx = new StellarSdk.TransactionBuilder(account, {
+      fee: StellarSdk.BASE_FEE,
+      networkPassphrase: NETWORK_PASSPHRASE,
+    })
+      .addOperation(contract.call('get_pool_balance'))
+      .setTimeout(30)
+      .build();
+
+    const result = await server.simulateTransaction(tx);
+    if (StellarSdk.rpc.Api.isSimulationSuccess(result) && result.result) {
+      // Divide by 10^7 (stroops to XLM)
+      const balanceStroops = Number(result.result.retval.i128()?.lo.toString() || 0);
+      return balanceStroops / 10_000_000;
+    }
+    return 0;
+  } catch (err) {
+    console.warn('Failed to fetch pool balance:', err);
+    return 0;
   }
 }
 
@@ -208,6 +530,38 @@ function parseContractError(error: string): ContractError {
   return 'ContractCallFailed';
 }
 
+function parsePoolError(error: string): string {
+  const errStr = error ? error.toString() : '';
+  if (errStr.includes('Error(Contract, #1)') || errStr.includes('InsufficientPoolFunds')) {
+    return 'InsufficientPoolFunds';
+  }
+  if (errStr.includes('Error(Contract, #2)') || errStr.includes('InvalidZKProof')) {
+    return 'InvalidZKProof';
+  }
+  if (errStr.includes('Error(Contract, #3)') || errStr.includes('NoActiveRegistryClaim')) {
+    return 'NoActiveRegistryClaim';
+  }
+  if (errStr.includes('Error(Contract, #4)') || errStr.includes('LoanAlreadyActive')) {
+    return 'LoanAlreadyActive';
+  }
+  if (errStr.includes('Error(Contract, #5)') || errStr.includes('UnauthorizedRepayment')) {
+    return 'UnauthorizedRepayment';
+  }
+  return 'ContractCallFailed';
+}
+
+function getPoolErrorMessage(error: string): string {
+  const messages: Record<string, string> = {
+    InsufficientPoolFunds: 'Loan Pool has insufficient funds to disburse this loan.',
+    InvalidZKProof: 'Your ZK Proof is invalid. Prover constraints failed.',
+    NoActiveRegistryClaim: 'No active readiness claim found. Please register on the Registry first.',
+    LoanAlreadyActive: 'You already have an active loan. Repay it before requesting a new one.',
+    UnauthorizedRepayment: 'Repayment unauthorized. No active loan found to repay.',
+    ContractCallFailed: 'Pool contract call failed. Please try again.',
+  };
+  return messages[error] || 'Pool contract call failed.';
+}
+
 export function getErrorMessage(error: ContractError): string {
   const messages: Record<ContractError, string> = {
     AlreadyRegistered: 'You already have an active claim. It refreshes in 30 days.',
@@ -230,6 +584,8 @@ function parseClaimFromScVal(scVal: StellarSdk.xdr.ScVal): ReadinessClaim | null
     let dtiPass = false;
     let balancePass = false;
     let historyPass = false;
+    let zkVerified = false;
+    let proofHash = '';
 
     for (const entry of map) {
       const keyStr = entry.key().sym()?.toString() || entry.key().sym() || '';
@@ -247,6 +603,17 @@ function parseClaimFromScVal(scVal: StellarSdk.xdr.ScVal): ReadinessClaim | null
         balancePass = val.b();
       } else if (keyStr === 'history_pass') {
         historyPass = val.b();
+      } else if (keyStr === 'zk_verified') {
+        zkVerified = val.b();
+      } else if (keyStr === 'proof_hash') {
+        try {
+          const vec = val.vec();
+          if (vec && vec.length > 0) {
+            proofHash = vec[0].bytes()?.toString('hex') || '';
+          }
+        } catch {
+          proofHash = val.bytes()?.toString('hex') || '';
+        }
       }
     }
 
@@ -257,9 +624,52 @@ function parseClaimFromScVal(scVal: StellarSdk.xdr.ScVal): ReadinessClaim | null
       dtiPass,
       balancePass,
       historyPass,
+      zkVerified,
+      proofHash,
     };
   } catch (err) {
     console.error('Error parsing claim ScVal:', err);
+    return null;
+  }
+}
+
+function parseLoanFromScVal(scVal: StellarSdk.xdr.ScVal): LoanRequest | null {
+  try {
+    const map = scVal.map();
+    if (!map) return null;
+
+    let borrower = '';
+    let amountStroops = BigInt(0);
+    let timestamp = 0;
+    let status: LoanStatus = 'Pending';
+
+    for (const entry of map) {
+      const keyStr = entry.key().sym()?.toString() || entry.key().sym() || '';
+      const val = entry.val();
+
+      if (keyStr === 'borrower') {
+        borrower = val.address()?.toString() || '';
+      } else if (keyStr === 'amount') {
+        amountStroops = BigInt(val.i128()?.lo.toString() || 0);
+      } else if (keyStr === 'timestamp') {
+        timestamp = Number(val.u64()?.toString() || 0);
+      } else if (keyStr === 'status') {
+        const statusVal = val.sym()?.toString() || '';
+        if (statusVal === 'Approved') status = 'Approved';
+        else if (statusVal === 'Rejected') status = 'Rejected';
+        else if (statusVal === 'Repaid') status = 'Repaid';
+        else status = 'Pending';
+      }
+    }
+
+    return {
+      borrower,
+      amount: (Number(amountStroops) / 10_000_000).toFixed(2), // Convert back to XLM
+      timestamp,
+      status,
+    };
+  } catch (err) {
+    console.error('Error parsing loan ScVal:', err);
     return null;
   }
 }

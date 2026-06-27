@@ -8,6 +8,75 @@ import { truncateAddress } from '@/lib/financial';
 export function EventFeed() {
   const { events, isPolling } = useContractEvents();
 
+  const getEventBadge = (type: string) => {
+    switch (type) {
+      case 'claim_registered':
+        return <Badge tone="indigo" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">claim_reg</Badge>;
+      case 'claim_zk_verified':
+        return <Badge tone="emerald" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">zk_verified 🛡️</Badge>;
+      case 'loan_approved':
+        return <Badge tone="emerald" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">loan_ok 💰</Badge>;
+      case 'loan_rejected':
+        return <Badge tone="red" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">loan_fail ✗</Badge>;
+      case 'loan_repaid':
+        return <Badge tone="amber" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">loan_repaid ✓</Badge>;
+      default:
+        return <Badge tone="indigo" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">event</Badge>;
+    }
+  };
+
+  const getEventDetails = (event: any) => {
+    switch (event.type) {
+      case 'claim_registered':
+        return (
+          <div className="mt-2.5 pt-2 border-t border-slate-900/60 flex items-center gap-4 text-[10px] font-semibold text-slate-400">
+            <div className="flex items-center gap-1">
+              <span className={event.dtiPass ? 'text-emerald-400' : 'text-rose-400'}>
+                {event.dtiPass ? '✓' : '✗'}
+              </span>
+              <span>DTI</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className={event.balancePass ? 'text-emerald-400' : 'text-rose-400'}>
+                {event.balancePass ? '✓' : '✗'}
+              </span>
+              <span>Balance</span>
+            </div>
+            <div className="flex items-center gap-1 text-slate-500">
+              <span className="text-amber-400">✓</span>
+              <span>History</span>
+            </div>
+          </div>
+        );
+      case 'claim_zk_verified':
+        return (
+          <p className="mt-2 text-xs text-emerald-300 font-medium">
+            Claim upgraded with Zero-Knowledge proof verification.
+          </p>
+        );
+      case 'loan_approved':
+        return (
+          <p className="mt-2 text-xs text-white">
+            Micro-loan of <span className="font-bold text-indigo-300">{event.amount} XLM</span> disbursed successfully.
+          </p>
+        );
+      case 'loan_rejected':
+        return (
+          <p className="mt-2 text-xs text-rose-300">
+            Loan request failed: ZK Proof or eligibility threshold constraint unmet.
+          </p>
+        );
+      case 'loan_repaid':
+        return (
+          <p className="mt-2 text-xs text-amber-300">
+            Repaid loan of <span className="font-bold text-white">{event.amount} XLM</span> back to the pool.
+          </p>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card className="flex flex-col h-[400px]">
       <div className="flex items-center justify-between border-b border-cloak-border p-4">
@@ -44,9 +113,7 @@ export function EventFeed() {
               className="p-3 rounded-xl border border-slate-800/80 bg-slate-950/40 hover:bg-slate-950/60 transition-all duration-200 animate-rise"
             >
               <div className="flex items-center justify-between gap-2">
-                <Badge tone="indigo" className="font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">
-                  claim_registered
-                </Badge>
+                {getEventBadge(event.type)}
                 <span className="text-[10px] text-slate-500 font-medium">
                   Ledger #{event.ledger}
                 </span>
@@ -61,24 +128,7 @@ export function EventFeed() {
                 </span>
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-slate-900/60 flex items-center gap-4 text-[10px] font-semibold text-slate-400">
-                <div className="flex items-center gap-1">
-                  <span className={event.dtiPass ? 'text-emerald-400' : 'text-rose-400'}>
-                    {event.dtiPass ? '✓' : '✗'}
-                  </span>
-                  <span>DTI</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className={event.balancePass ? 'text-emerald-400' : 'text-rose-400'}>
-                    {event.balancePass ? '✓' : '✗'}
-                  </span>
-                  <span>Balance</span>
-                </div>
-                <div className="flex items-center gap-1 text-slate-500">
-                  <span className="text-amber-400">✓</span>
-                  <span>History</span>
-                </div>
-              </div>
+              {getEventDetails(event)}
             </div>
           ))
         )}
