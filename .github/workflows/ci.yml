@@ -1,0 +1,68 @@
+name: CredCloak CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-build-frontend:
+    name: Frontend Lint & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Run frontend tests
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+  test-contracts:
+    name: Soroban Contract Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Test Registry Contract
+        working-directory: contracts/credcloak-registry
+        run: cargo test
+
+      - name: Test Loan Pool Contract
+        working-directory: contracts/credcloak-loan-pool
+        run: cargo test
+
+      - name: Build contracts (WASM)
+        run: |
+          cd contracts/credcloak-registry && cargo build --target wasm32-unknown-unknown --release
+          cd contracts/credcloak-loan-pool && cargo build --target wasm32-unknown-unknown --release
