@@ -54,3 +54,21 @@ The application handles three specific contract errors defined on-chain:
 ## 📡 Live Event Feed
 
 The frontend polls the Soroban RPC endpoint every 8 seconds for new events matching the contract address. When a `claim_registered` event is detected, it is parsed and dynamically appended to the on-chain activity stream showing the borrower address (truncated) and their threshold passes (DTI/Balance).
+
+---
+
+## 📸 Application Snapshots
+
+The following screenshots capture the new features and integrations added in Level 2:
+
+### 1. Multi-Wallet Integration
+Visualizes the wallet connection panel displaying Freighter, Albedo, xBull, and LOBSTR options.
+![Multi-Wallet Integration](../snapshots/8_MultiWallet-Integration.png)
+
+### 2. Live On-Chain Registry Status
+Displays the registered status on the smart contract, showing details of active claim timestamps and cooldown periods.
+![Live On-Chain Registry status](../snapshots/6_Live%20On%20Chain%20Registry%20status.png)
+
+### 3. On-Chain Activity Feed
+Shows real-time streamed events from the contract registry displayed on the dashboard.
+![On-Chain Activity](../snapshots/7_OnChainActivity.png)
