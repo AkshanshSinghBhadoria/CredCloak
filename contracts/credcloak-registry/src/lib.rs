@@ -1,7 +1,7 @@
 #![no_std]
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, 
-    Address, Bytes, Env, Symbol, symbol_short
+    Address, Bytes, BytesN, Env, Symbol, symbol_short
 };
 
 // ---- Storage Keys ----
@@ -18,6 +18,8 @@ pub struct ReadinessClaim {
     pub dti_pass: bool,
     pub balance_pass: bool,
     pub history_pass: bool,
+    pub zk_verified: bool,      // NEW
+    pub proof_hash: Option<BytesN<32>>, // NEW
 }
 
 // ---- Error Codes ----
@@ -75,6 +77,8 @@ impl CredCloakRegistry {
             dti_pass,
             balance_pass,
             history_pass,
+            zk_verified: false,
+            proof_hash: None,
         };
         env.storage().persistent().set(&claim_key, &claim);
 
@@ -90,6 +94,31 @@ impl CredCloakRegistry {
         );
 
         Ok(timestamp)
+    }
+
+    /// Upgrade a plain claim to ZK-verified status.
+    /// Called after a borrower successfully registers a proof with the LoanPool.
+    pub fn upgrade_to_zk_verified(
+        env: Env,
+        borrower: Address,
+        proof_hash: BytesN<32>,
+    ) -> Result<(), ContractError> {
+        borrower.require_auth();
+        let claim_key = (CLAIMS_KEY, borrower.clone());
+        let mut claim = env.storage().persistent()
+            .get::<_, ReadinessClaim>(&claim_key)
+            .ok_or(ContractError::Unauthorized)?;
+
+        claim.zk_verified = true;
+        claim.proof_hash = Some(proof_hash);
+        env.storage().persistent().set(&claim_key, &claim);
+
+        env.events().publish(
+            (symbol_short!("claim"), symbol_short!("zk_verified")),
+            (borrower.clone(), env.ledger().timestamp())
+        );
+
+        Ok(())
     }
 
     /// Get the latest claim for a borrower.
@@ -115,5 +144,10 @@ impl CredCloakRegistry {
             return env.ledger().timestamp() - claim.timestamp < cooldown;
         }
         false
+    }
+
+    /// Alias of has_active_claim for simpler inter-contract calls
+    pub fn has_claim(env: Env, borrower: Address) -> bool {
+        Self::has_active_claim(env, borrower)
     }
 }
