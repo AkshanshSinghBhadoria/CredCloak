@@ -81,9 +81,15 @@ export default function DashboardPage() {
   }
 
   const isClaimActive = hasActiveClaim && cooldownDaysLeft > 0;
-  const isRegisterDisabled = !walletState.isConnected || !walletState.address || !thresholdsMet || isClaimActive || txStatus === 'signing' || txStatus === 'submitting';
+  const isAccountEmpty = !walletState.balance || parseFloat(walletState.balance) === 0;
+  const isRegisterDisabled = !walletState.isConnected || !walletState.address || (!thresholdsMet && !isAccountEmpty) || isClaimActive || txStatus === 'signing' || txStatus === 'submitting';
 
   const handleRegisterClaim = async () => {
+    if (isAccountEmpty) {
+      alert("Registration failed: Your wallet balance is 0 XLM. You cannot register a readiness claim with an empty account. Please fund your account using the Friendbot button to establish transaction history.");
+      return;
+    }
+
     if (!walletState.isConnected || !walletState.address || !thresholdsMet || isClaimActive) return;
 
     setTxStatus('signing');

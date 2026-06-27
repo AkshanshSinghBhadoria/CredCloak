@@ -45,6 +45,7 @@ export function ContractPanel({
   };
 
   const hasWallet = walletState.isConnected && !!walletState.address;
+  const isAccountEmpty = !walletState.balance || parseFloat(walletState.balance) === 0;
 
   // Tooltip descriptions
   let buttonTooltip = '';
@@ -52,6 +53,8 @@ export function ContractPanel({
     buttonTooltip = 'Please connect your wallet first.';
   } else if (isClaimActive) {
     buttonTooltip = `You already have an active claim on-chain. Resubmission available in ${cooldownDaysLeft} days.`;
+  } else if (isAccountEmpty) {
+    buttonTooltip = 'Click to register (Warning: Zero balance account).';
   } else if (!thresholdsMet) {
     buttonTooltip = 'Your credit metrics do not meet the minimum criteria to register.';
   }
@@ -143,7 +146,7 @@ export function ContractPanel({
             <button
               type="button"
               onClick={onRegister}
-              disabled={!hasWallet || !thresholdsMet || isClaimActive || txStatus === 'signing' || txStatus === 'submitting'}
+              disabled={!hasWallet || (!thresholdsMet && !isAccountEmpty) || isClaimActive || txStatus === 'signing' || txStatus === 'submitting'}
               className="w-full rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white shadow-proof transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {txStatus === 'signing' || txStatus === 'submitting' ? (
