@@ -12,3 +12,6 @@ soroban-sdk = "22.0.1"
 [profile.release]
 opt-level = "z"
 overflow-checks = true
+
+[dev-dependencies]
+credcloak-registry = { path = "../credcloak-registry" }
