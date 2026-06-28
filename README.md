@@ -24,7 +24,7 @@ This release implements the core data ingestion, analysis, and transactional fou
 
 This release implements the Proof Registry smart contract on-chain and integrates it dynamically with the dashboard:
 - **Proof Registry Soroban Contract**: A Rust Soroban contract deployed to the Stellar Testnet.
-  * **Contract Address**: `CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET`
+  * **Contract Address**: `CANCQ2OSUUBAFHFR74JOSYPOMVSMIWECAUUMVBJCWLPQUJMOEWKSTTR6`
   * **WASM Upload Hash**: `212cf2f6e9c8439b728838e48106e17b0c6cf90d52af7170f8c7b092a1dd640f`
   * **Instantiation Hash**: `ffc3d4e79b1ebb855ae2248c688d1ed1efbbf3b5e1463a000ed5d3eafa01d290`
   * **Contract Call (register_claim) Tx Hash**: `c801d2ab4c9dd7de2f0d52fa73b0f5eb69dad97ec003f7b33f6b2f9657483d53`
@@ -40,7 +40,7 @@ This release implements the Proof Registry smart contract on-chain and integrate
 This release implements client-side zero-knowledge proof generation, a second smart contract (Loan Pool), inter-contract calls, and full mobile responsiveness:
 - **Noir ZK-Proof Circuit**: A Noir-compiled ZK circuit running inside the browser to prove average balance and DTI ratio constraints without revealing raw input parameters.
 - **ZK-Gated Micro-Loan Pool Soroban Contract**: Deployed to the Stellar Testnet.
-  * **Contract Address**: `CBX44C272X6X2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52`
+  * **Contract Address**: `CCG73VOI47GXNG7HPULUTX3MCK4E7BOLUVIC6RVIO527NKN3APCJHFYU`
   * **WASM Upload Hash**: `a26cf2f6e9c8439b728838e48106e17b0c6cf90d52af7170f8c7b092a1dd640f`
   * **Instantiation Hash**: `bbd3d4e79b1ebb855ae2248c688d1ed1efbbf3b5e1463a000ed5d3eafa01d290`
   * **Contract Call (request_loan) Tx Hash**: `2fa84b8c66e2cbf159b3bbff8c035fa3de9c135efbe843232c66d2ab28383e20`
