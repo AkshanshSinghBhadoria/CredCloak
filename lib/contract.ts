@@ -86,7 +86,9 @@ export async function registerReadinessClaim(
       return {
         success: false,
         error: errCode,
-        errorMessage: getErrorMessage(errCode),
+        errorMessage: errCode === 'ContractCallFailed'
+          ? `Simulation failed: ${simResult.error}`
+          : getErrorMessage(errCode),
       };
     }
 
@@ -176,7 +178,9 @@ export async function upgradeClaimToZKVerified(
       return {
         success: false,
         error: errCode,
-        errorMessage: getErrorMessage(errCode),
+        errorMessage: errCode === 'ContractCallFailed'
+          ? `Simulation failed: ${simResult.error}`
+          : getErrorMessage(errCode),
       };
     }
 
@@ -265,7 +269,9 @@ export async function requestLoan(
       return {
         success: false,
         error: 'ContractCallFailed',
-        errorMessage: getPoolErrorMessage(errCode),
+        errorMessage: errCode === 'ContractCallFailed'
+          ? `Simulation failed: ${simResult.error}`
+          : getPoolErrorMessage(errCode),
       };
     }
 
@@ -340,7 +346,9 @@ export async function repayLoan(
       return {
         success: false,
         error: 'ContractCallFailed',
-        errorMessage: getPoolErrorMessage(errCode),
+        errorMessage: errCode === 'ContractCallFailed'
+          ? `Simulation failed: ${simResult.error}`
+          : getPoolErrorMessage(errCode),
       };
     }
 

@@ -1,6 +1,6 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contractimpl, contracttype,
+    contract, contracterror, contractimpl, contracttype,
     Address, Bytes, Env, Symbol, Vec,
     symbol_short, token
 };
@@ -30,8 +30,9 @@ pub enum LoanStatus {
     Repaid,
 }
 
-#[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
 pub enum PoolError {
     InsufficientPoolFunds = 1,
     InvalidZKProof = 2,

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use soroban_sdk::{testutils::*, Env, Address, Bytes, Vec, token};
+    use soroban_sdk::{testutils::*, Env, Address, Bytes, Vec, token, testutils::Address as _};
     use credcloak_registry::{CredCloakRegistry, CredCloakRegistryClient};
     use credcloak_loan_pool::{CredCloakLoanPool, CredCloakLoanPoolClient, PoolError, LoanStatus};
 
@@ -69,7 +69,7 @@ mod tests {
         
         let token_admin = Address::generate(&env);
         let token_id = env.register_stellar_asset_contract(token_admin.clone());
-        let token_client = token::StellarAssetContractClient::new(&env, &token_id);
+        let token_client = token::StellarAssetClient::new(&env, &token_id);
 
         let registry_client = CredCloakRegistryClient::new(&env, &registry_id);
         let pool_client = CredCloakLoanPoolClient::new(&env, &pool_id);
@@ -91,18 +91,19 @@ mod tests {
             &true,
             &true,
             &true,
-        ).unwrap();
+        );
 
         // 3. Request loan with valid proof -> Success
         let borrow_amount = 200_000_000_i128; // 20 XLM
         let dummy_proof = Bytes::from_slice(&env, &[1; 32]);
+        env.ledger().set_timestamp(1000);
         let result = pool_client.request_loan(
             &borrower,
             &borrow_amount,
             &dummy_proof,
             &Vec::new(&env),
         );
-        assert!(result.is_ok());
+        assert_eq!(result, 1000);
 
         // 4. Verify loan state and balance transfers
         let loan = pool_client.get_loan(&borrower);

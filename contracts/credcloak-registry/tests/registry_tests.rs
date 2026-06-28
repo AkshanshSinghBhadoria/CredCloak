@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use soroban_sdk::{testutils::*, Env, Address, Bytes};
+    use soroban_sdk::{testutils::*, Env, Address, Bytes, testutils::Address as _};
     use credcloak_registry::{CredCloakRegistry, CredCloakRegistryClient, ContractError};
 
     #[test]
@@ -10,6 +10,7 @@ mod tests {
         let contract_id = env.register_contract(None, CredCloakRegistry);
         let client = CredCloakRegistryClient::new(&env, &contract_id);
         let borrower = Address::generate(&env);
+        env.ledger().set_timestamp(1000);
 
         let result = client.register_claim(
             &borrower,
@@ -18,7 +19,7 @@ mod tests {
             &true,   // balance_pass
             &true,   // history_pass
         );
-        assert!(result.is_ok());
+        assert_eq!(result, 1000);
 
         // Verify claim was stored
         let claim = client.get_claim(&borrower);
@@ -60,7 +61,7 @@ mod tests {
             &borrower,
             &Bytes::from_slice(&env, b"test_hash_12345678901234567890ab"),
             &true, &true, &true,
-        ).unwrap();
+        );
 
         // Second claim immediately — fails (cooldown)
         let result = client.try_register_claim(
@@ -85,7 +86,7 @@ mod tests {
             &borrower,
             &Bytes::from_slice(&env, b"test_hash_12345678901234567890ab"),
             &true, &true, &true,
-        ).unwrap();
+        );
 
         assert_eq!(client.get_total_claims(), 1);
     }

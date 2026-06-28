@@ -277,6 +277,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "credcloak-loan-pool"
+version = "0.1.0"
+dependencies = [
+ "credcloak-registry",
+ "soroban-sdk",
+]
+
+[[package]]
 name = "credcloak-registry"
 version = "0.1.0"
 dependencies = [

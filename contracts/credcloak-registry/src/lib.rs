@@ -114,7 +114,7 @@ impl CredCloakRegistry {
         env.storage().persistent().set(&claim_key, &claim);
 
         env.events().publish(
-            (symbol_short!("claim"), symbol_short!("zk_verified")),
+            (symbol_short!("claim"), Symbol::new(&env, "zk_verified")),
             (borrower.clone(), env.ledger().timestamp())
         );
 
