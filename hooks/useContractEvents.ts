@@ -6,7 +6,7 @@ import { ContractEvent } from '@/lib/types';
 
 const SOROBAN_RPC = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || 'CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET';
-const LOAN_POOL_ADDRESS = process.env.NEXT_PUBLIC_LOAN_POOL_ADDRESS || 'CBX44C272X6X2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52';
+const LOAN_POOL_ADDRESS = process.env.NEXT_PUBLIC_LOAN_POOL_ADDRESS || 'CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET'; // Fallback to same valid contract address format
 const POLL_INTERVAL = 8000; // 8 seconds
 
 export function useContractEvents() {
@@ -16,8 +16,12 @@ export function useContractEvents() {
 
   const fetchEvents = useCallback(async () => {
     const contractIds = [];
-    if (CONTRACT_ADDRESS && !CONTRACT_ADDRESS.startsWith('CXXXX')) contractIds.push(CONTRACT_ADDRESS);
-    if (LOAN_POOL_ADDRESS && !LOAN_POOL_ADDRESS.startsWith('CXXXX')) contractIds.push(LOAN_POOL_ADDRESS);
+    if (CONTRACT_ADDRESS && StellarSdk.StrKey.isValidContract(CONTRACT_ADDRESS)) {
+      contractIds.push(CONTRACT_ADDRESS);
+    }
+    if (LOAN_POOL_ADDRESS && StellarSdk.StrKey.isValidContract(LOAN_POOL_ADDRESS) && LOAN_POOL_ADDRESS !== CONTRACT_ADDRESS) {
+      contractIds.push(LOAN_POOL_ADDRESS);
+    }
 
     if (contractIds.length === 0) return;
 

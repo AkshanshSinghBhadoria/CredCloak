@@ -4,7 +4,7 @@ import { FinancialStats } from './types';
 
 // Env variables with fallback to avoid crashes on boot
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || 'CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET';
-const LOAN_POOL_ADDRESS = process.env.NEXT_PUBLIC_LOAN_POOL_ADDRESS || 'CBX44C272X6X2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52'; // Deployed in this level
+const LOAN_POOL_ADDRESS = process.env.NEXT_PUBLIC_LOAN_POOL_ADDRESS || 'CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET'; // Deployed in this level
 const SOROBAN_RPC = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
 const NETWORK_PASSPHRASE = StellarSdk.Networks.TESTNET;
 const EXPLORER_BASE = 'https://stellar.expert/explorer/testnet/tx';
