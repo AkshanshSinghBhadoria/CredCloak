@@ -51,50 +51,49 @@ export function useContractEvents() {
           let eventType: ContractEvent['type'] = 'claim_registered';
 
           try {
-            const top1 = e.topic[0]?.sym()?.toString() || '';
-            const top2 = e.topic[1]?.sym()?.toString() || '';
+            const top1 = e.topic && e.topic[0] ? StellarSdk.scValToNative(e.topic[0])?.toString() : '';
+            const top2 = e.topic && e.topic[1] ? StellarSdk.scValToNative(e.topic[1])?.toString() : '';
 
-            const val = e.value;
-            const vec = val.vec();
+            const nativeValue = e.value ? StellarSdk.scValToNative(e.value) : null;
 
             if (top1 === 'claim') {
               if (top2 === 'registered') {
                 eventType = 'claim_registered';
-                if (vec && vec.length >= 4) {
-                  borrower = vec[0].address()?.toString() || 'Unknown';
-                  dtiPass = vec[2].b();
-                  balancePass = vec[3].b();
+                if (Array.isArray(nativeValue) && nativeValue.length >= 4) {
+                  borrower = nativeValue[0]?.toString() || 'Unknown';
+                  dtiPass = !!nativeValue[2];
+                  balancePass = !!nativeValue[3];
                 }
               } else if (top2 === 'zk_verified') {
                 eventType = 'claim_zk_verified';
-                if (vec && vec.length >= 2) {
-                  borrower = vec[0].address()?.toString() || 'Unknown';
+                if (Array.isArray(nativeValue) && nativeValue.length >= 1) {
+                  borrower = nativeValue[0]?.toString() || 'Unknown';
                 }
               }
             } else if (top1 === 'loan') {
               if (top2 === 'approved') {
                 eventType = 'loan_approved';
-                if (vec && vec.length >= 3) {
-                  borrower = vec[0].address()?.toString() || 'Unknown';
-                  const amtBig = BigInt(vec[1].i128()?.lo.toString() || 0);
+                if (Array.isArray(nativeValue) && nativeValue.length >= 2) {
+                  borrower = nativeValue[0]?.toString() || 'Unknown';
+                  const amtBig = BigInt(nativeValue[1]?.toString() || 0);
                   amount = (Number(amtBig) / 10_000_000).toFixed(2);
                 }
               } else if (top2 === 'rejected') {
                 eventType = 'loan_rejected';
-                if (vec && vec.length >= 1) {
-                  borrower = vec[0].address()?.toString() || 'Unknown';
+                if (Array.isArray(nativeValue) && nativeValue.length >= 1) {
+                  borrower = nativeValue[0]?.toString() || 'Unknown';
                 }
               } else if (top2 === 'repaid') {
                 eventType = 'loan_repaid';
-                if (vec && vec.length >= 3) {
-                  borrower = vec[0].address()?.toString() || 'Unknown';
-                  const amtBig = BigInt(vec[1].i128()?.lo.toString() || 0);
+                if (Array.isArray(nativeValue) && nativeValue.length >= 2) {
+                  borrower = nativeValue[0]?.toString() || 'Unknown';
+                  const amtBig = BigInt(nativeValue[1]?.toString() || 0);
                   amount = (Number(amtBig) / 10_000_000).toFixed(2);
                 }
               }
             }
           } catch (err) {
-            console.warn('Failed parsing event ScVal values:', err);
+            console.warn('Failed parsing event values:', err);
           }
 
           return {
