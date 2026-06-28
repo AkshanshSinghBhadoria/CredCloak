@@ -2,8 +2,8 @@
 
 # Build all contracts
 build:
-	cd contracts/credcloak-registry && cargo build --target wasm32-unknown-unknown --release
-	cd contracts/credcloak-loan-pool && cargo build --target wasm32-unknown-unknown --release
+	cd contracts/credcloak-registry && stellar contract build
+	cd contracts/credcloak-loan-pool && stellar contract build
 
 # Test all contracts
 test:
@@ -13,14 +13,14 @@ test:
 # Deploy registry contract to testnet
 deploy-registry:
 	stellar contract deploy \
-		--wasm contracts/credcloak-registry/target/wasm32-unknown-unknown/release/credcloak_registry.wasm \
+		--wasm contracts/credcloak-registry/target/wasm32v1-none/release/credcloak_registry.wasm \
 		--source deployer \
 		--network testnet
 
 # Deploy loan pool contract to testnet
 deploy-pool:
 	stellar contract deploy \
-		--wasm contracts/credcloak-loan-pool/target/wasm32-unknown-unknown/release/credcloak_loan_pool.wasm \
+		--wasm contracts/credcloak-loan-pool/target/wasm32v1-none/release/credcloak_loan_pool.wasm \
 		--source deployer \
 		--network testnet
 

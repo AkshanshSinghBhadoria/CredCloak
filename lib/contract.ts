@@ -43,6 +43,15 @@ async function computeSha256(bytes: Uint8Array): Promise<Uint8Array> {
   return new Uint8Array(hashBuffer);
 }
 
+// Extract signed XDR string from possible object/string response at runtime
+function extractSignedXDR(result: any): string {
+  if (typeof result === 'string') return result;
+  if (result && typeof result === 'object') {
+    return result.signedTxXdr || result.signedTransaction || '';
+  }
+  return '';
+}
+
 export async function registerReadinessClaim(
   borrowerAddress: string,
   stats: FinancialStats,
@@ -93,7 +102,8 @@ export async function registerReadinessClaim(
     }
 
     const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
-    const signedXDR = await signTransaction(preparedTx.toXDR());
+    const rawSignedXDR = await signTransaction(preparedTx.toXDR());
+    const signedXDR = extractSignedXDR(rawSignedXDR);
     const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
     const submitResult = await server.sendTransaction(signedTx);
 
@@ -185,7 +195,8 @@ export async function upgradeClaimToZKVerified(
     }
 
     const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
-    const signedXDR = await signTransaction(preparedTx.toXDR());
+    const rawSignedXDR = await signTransaction(preparedTx.toXDR());
+    const signedXDR = extractSignedXDR(rawSignedXDR);
     const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
     const submitResult = await server.sendTransaction(signedTx);
 
@@ -276,7 +287,8 @@ export async function requestLoan(
     }
 
     const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
-    const signedXDR = await signTransaction(preparedTx.toXDR());
+    const rawSignedXDR = await signTransaction(preparedTx.toXDR());
+    const signedXDR = extractSignedXDR(rawSignedXDR);
     const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
     const submitResult = await server.sendTransaction(signedTx);
 
@@ -353,7 +365,8 @@ export async function repayLoan(
     }
 
     const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
-    const signedXDR = await signTransaction(preparedTx.toXDR());
+    const rawSignedXDR = await signTransaction(preparedTx.toXDR());
+    const signedXDR = extractSignedXDR(rawSignedXDR);
     const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
     const submitResult = await server.sendTransaction(signedTx);
 

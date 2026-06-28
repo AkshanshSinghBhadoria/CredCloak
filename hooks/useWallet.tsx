@@ -89,7 +89,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const result = await StellarWalletsKit.signTransaction(xdr, {
         networkPassphrase: 'Test SDF Network ; September 2015',
       });
-      return result.signedTxXdr;
+      if (typeof result === 'string') {
+        return result;
+      }
+      if (result && typeof result === 'object') {
+        const resObj = result as any;
+        if ('signedTxXdr' in resObj && typeof resObj.signedTxXdr === 'string') {
+          return resObj.signedTxXdr;
+        }
+        if ('signedTransaction' in resObj && typeof resObj.signedTransaction === 'string') {
+          return resObj.signedTransaction;
+        }
+      }
+      return (result as any)?.signedTxXdr || (result as any)?.signedTransaction || (result as any)?.toString() || '';
     },
     [],
   );
