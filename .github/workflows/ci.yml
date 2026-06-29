@@ -62,7 +62,10 @@ jobs:
         working-directory: contracts/credcloak-loan-pool
         run: cargo test --verbose
 
-      - name: Build contracts (WASM)
-        run: |
-          cd contracts/credcloak-registry && cargo build --verbose --target wasm32-unknown-unknown --release
-          cd contracts/credcloak-loan-pool && cargo build --verbose --target wasm32-unknown-unknown --release
+      - name: Build Registry Contract (WASM)
+        working-directory: contracts/credcloak-registry
+        run: cargo build --verbose --target wasm32-unknown-unknown --release
+
+      - name: Build Loan Pool Contract (WASM)
+        working-directory: contracts/credcloak-loan-pool
+        run: cargo build --verbose --target wasm32-unknown-unknown --release
