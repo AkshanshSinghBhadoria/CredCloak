@@ -38,15 +38,15 @@ CredCloak follows a robust multi-layered client-side approach:
 
 ```mermaid
 graph TD
-    User([User's Browser]) -->|Connect Wallet| SWK[Stellar Wallets Kit]
-    SWK -->| Freighter / Albedo / xBull / LOBSTR| Wallet[Wallet Extension / Web App]
-    User -->|Ingest Payments & Balance| Horizon[Stellar Horizon API]
-    User -->|Build Payment / Contract Call| SDK[@stellar/stellar-sdk]
+    User(["User's Browser"]) -->|Connect Wallet| SWK["Stellar Wallets Kit"]
+    SWK -->| "Freighter / Albedo / xBull / LOBSTR"| Wallet["Wallet Extension / Web App"]
+    User -->|Ingest Payments & Balance| Horizon["Stellar Horizon API"]
+    User -->|Build Payment / Contract Call| SDK["@stellar/stellar-sdk"]
     SDK -->|Request Signature| SWK
     Wallet -->|Submit Signed XDR| Horizon
-    User -->|Invoke / Poll events| RPC[Stellar Soroban RPC Server]
-    RPC -->|Interact / Read| Contract[Proof Registry Soroban Contract]
-    RPC -->|Request Micro-Loan| Pool[CredCloakLoanPool Contract]
+    User -->|Invoke / Poll events| RPC["Stellar Soroban RPC Server"]
+    RPC -->|Interact / Read| Contract["Proof Registry Soroban Contract"]
+    RPC -->|Request Micro-Loan| Pool["CredCloakLoanPool Contract"]
     Pool -->|Inter-Contract Call: has_claim| Contract
 ```
 
