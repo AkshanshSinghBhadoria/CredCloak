@@ -117,9 +117,9 @@ export function TransactionHistory({ transactions, isLoading, address, onFunded 
               </thead>
               <tbody className="divide-y divide-slate-800">
                 {visible.map((tx) => (
-                  <tr key={tx.id} className={tx.type === 'received' ? 'border-l-4 border-l-emerald-400/70 bg-emerald-500/[0.03]' : 'border-l-4 border-l-red-400/70 bg-red-500/[0.03]'}>
+                  <tr key={tx.id} className="border-l-4 border-l-emerald-400/70 bg-emerald-500/[0.03]">
                     <td className="px-5 py-4 text-slate-300">{new Date(tx.createdAt).toLocaleDateString()}</td>
-                    <td className="px-5 py-4"><Badge tone={tx.type === 'received' ? 'green' : 'red'}>{tx.type}</Badge></td>
+                    <td className="px-5 py-4"><Badge tone="green">{tx.type}</Badge></td>
                     <td className="px-5 py-4 font-display font-bold text-white">{Number(tx.amount).toFixed(2)} XLM</td>
                     <td className="px-5 py-4">
                       <button type="button" onClick={() => navigator.clipboard?.writeText(tx.counterparty)} className="font-mono text-indigo-300 hover:text-indigo-100" title="Copy full address">
@@ -142,11 +142,11 @@ export function TransactionHistory({ transactions, isLoading, address, onFunded 
             {visible.map((tx) => (
               <div
                 key={tx.id}
-                className={`p-4 ${tx.type === 'received' ? 'border-l-4 border-l-emerald-400/70 bg-emerald-500/[0.02]' : 'border-l-4 border-l-red-400/70 bg-red-500/[0.02]'}`}
+                className="p-4 border-l-4 border-l-emerald-400/70 bg-emerald-500/[0.02]"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-500">{new Date(tx.createdAt).toLocaleDateString()}</span>
-                  <Badge tone={tx.type === 'received' ? 'green' : 'red'}>{tx.type}</Badge>
+                  <Badge tone="green">{tx.type}</Badge>
                 </div>
                 <div className="mt-2 flex items-baseline justify-between">
                   <span className="text-sm font-semibold text-slate-400">Amount</span>
