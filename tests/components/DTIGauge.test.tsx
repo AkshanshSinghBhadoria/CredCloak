@@ -1,5 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { screen } from '@testing-library/dom';
 import { DTIGauge } from '@/components/DTIGauge';
 
 describe('DTIGauge Component', () => {
