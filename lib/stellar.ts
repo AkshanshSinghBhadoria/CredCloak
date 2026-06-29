@@ -20,19 +20,40 @@ export async function buildAndSubmitTransaction(
     }
 
     const server = new StellarSdk.Horizon.Server(HORIZON_TESTNET);
+    
+    // Check if the destination account exists
+    let destinationExists = false;
+    try {
+      await server.loadAccount(params.destination);
+      destinationExists = true;
+    } catch (err: any) {
+      if (err.response?.status !== 404) {
+        throw err;
+      }
+    }
+
     const sourceAccount = await server.loadAccount(params.sourceAddress);
     const txBuilder = new StellarSdk.TransactionBuilder(sourceAccount, {
       fee: StellarSdk.BASE_FEE,
       networkPassphrase: NETWORK_PASSPHRASE,
     });
 
-    txBuilder.addOperation(
-      StellarSdk.Operation.payment({
-        destination: params.destination,
-        asset: StellarSdk.Asset.native(),
-        amount: params.amount,
-      }),
-    );
+    if (destinationExists) {
+      txBuilder.addOperation(
+        StellarSdk.Operation.payment({
+          destination: params.destination,
+          asset: StellarSdk.Asset.native(),
+          amount: params.amount,
+        }),
+      );
+    } else {
+      txBuilder.addOperation(
+        StellarSdk.Operation.createAccount({
+          destination: params.destination,
+          startingBalance: params.amount,
+        }),
+      );
+    }
 
     if (params.memo) txBuilder.addMemo(StellarSdk.Memo.text(params.memo));
     txBuilder.setTimeout(30);
@@ -48,8 +69,31 @@ export async function buildAndSubmitTransaction(
       stellarLabUrl: getStellarLabUrl(result.hash),
     };
   } catch (error: unknown) {
-    const err = error as { response?: { data?: { extras?: { result_codes?: { transaction?: string } } } }; message?: string };
-    const message = err.response?.data?.extras?.result_codes?.transaction ?? err.message ?? 'Transaction failed.';
+    const err = error as { 
+      response?: { 
+        data?: { 
+          extras?: { 
+            result_codes?: { 
+              transaction?: string; 
+              operations?: string[]; 
+            } 
+          } 
+        } 
+      }; 
+      message?: string; 
+    };
+    
+    const txCode = err.response?.data?.extras?.result_codes?.transaction;
+    const opCodes = err.response?.data?.extras?.result_codes?.operations;
+    
+    let message = err.message ?? 'Transaction failed.';
+    if (txCode) {
+      message = txCode;
+      if (opCodes && opCodes.length > 0) {
+        message += ` (Operation error: ${opCodes.join(', ')})`;
+      }
+    }
+    
     return { success: false, error: message };
   }
 }
