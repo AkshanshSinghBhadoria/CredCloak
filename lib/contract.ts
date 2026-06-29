@@ -104,6 +104,9 @@ export async function registerReadinessClaim(
     const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
     const rawSignedXDR = await signTransaction(preparedTx.toXDR());
     const signedXDR = extractSignedXDR(rawSignedXDR);
+    if (!signedXDR) {
+      throw new Error('Transaction signing failed or was cancelled.');
+    }
     const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
     const submitResult = await server.sendTransaction(signedTx);
 
@@ -197,6 +200,9 @@ export async function upgradeClaimToZKVerified(
     const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
     const rawSignedXDR = await signTransaction(preparedTx.toXDR());
     const signedXDR = extractSignedXDR(rawSignedXDR);
+    if (!signedXDR) {
+      throw new Error('Transaction signing failed or was cancelled.');
+    }
     const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
     const submitResult = await server.sendTransaction(signedTx);
 
@@ -289,6 +295,9 @@ export async function requestLoan(
     const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
     const rawSignedXDR = await signTransaction(preparedTx.toXDR());
     const signedXDR = extractSignedXDR(rawSignedXDR);
+    if (!signedXDR) {
+      throw new Error('Transaction signing failed or was cancelled.');
+    }
     const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
     const submitResult = await server.sendTransaction(signedTx);
 
@@ -367,6 +376,9 @@ export async function repayLoan(
     const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
     const rawSignedXDR = await signTransaction(preparedTx.toXDR());
     const signedXDR = extractSignedXDR(rawSignedXDR);
+    if (!signedXDR) {
+      throw new Error('Transaction signing failed or was cancelled.');
+    }
     const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
     const submitResult = await server.sendTransaction(signedTx);
 
