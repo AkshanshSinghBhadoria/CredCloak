@@ -39,7 +39,7 @@ CredCloak follows a robust multi-layered client-side approach:
 ```mermaid
 graph TD
     User(["User's Browser"]) -->|Connect Wallet| SWK["Stellar Wallets Kit"]
-    SWK -->| "Freighter / Albedo / xBull / LOBSTR"| Wallet["Wallet Extension / Web App"]
+    SWK -->|Freighter / Albedo / xBull / LOBSTR| Wallet["Wallet Extension / Web App"]
     User -->|Ingest Payments & Balance| Horizon["Stellar Horizon API"]
     User -->|Build Payment / Contract Call| SDK["@stellar/stellar-sdk"]
     SDK -->|Request Signature| SWK
