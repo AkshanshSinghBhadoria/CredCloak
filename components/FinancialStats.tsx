@@ -14,7 +14,7 @@ export function FinancialStats({ stats, isLoading }: { stats: FinancialStatsType
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 max-w-3xl">
         {Array.from({ length: 4 }).map((_, index) => (
           <Card key={index} className="p-5">
             <div className="h-4 w-28 animate-pulse rounded bg-slate-700" />
@@ -27,9 +27,13 @@ export function FinancialStats({ stats, isLoading }: { stats: FinancialStatsType
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {cards.map((card) => (
-        <Card key={card.label} className="p-5 animate-rise">
+    <div className="grid gap-6 sm:grid-cols-2 max-w-3xl">
+      {cards.map((card, index) => (
+        <Card
+          key={card.label}
+          className="p-5 animate-rise"
+          style={{ animationDelay: `${index * 250}ms` }}
+        >
           <p className="text-sm font-medium text-slate-400">{card.label}</p>
           <p className="mt-5 break-words font-display text-3xl font-bold text-white">{card.value}</p>
           <p className="mt-5 text-sm text-slate-400">

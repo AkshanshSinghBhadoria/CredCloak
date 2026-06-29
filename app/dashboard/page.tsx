@@ -237,13 +237,6 @@ export default function DashboardPage() {
               <div className="mt-6">
                 <FinancialStats stats={stats} isLoading={isLoading} />
               </div>
-
-              <div className="grid gap-6 md:grid-cols-[minmax(0,400px)_1fr]">
-                <Card className="p-6 flex flex-col justify-center items-center">
-                  <DTIGauge dtiRatio={stats.dtiRatio} />
-                </Card>
-                <EventFeed />
-              </div>
             </div>
           )}
 
@@ -253,7 +246,10 @@ export default function DashboardPage() {
                 <h1 className="font-display text-4xl font-bold text-white">Loan Readiness</h1>
                 <p className="mt-2 text-slate-400">Review your eligibility snapshots and claim registry status.</p>
               </div>
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_1fr]">
+                <Card className="p-6 flex flex-col justify-center items-center">
+                  <DTIGauge dtiRatio={stats.dtiRatio} />
+                </Card>
                 <LoanReadinessSnapshot
                   indicators={loanReadiness}
                   onRegisterClick={handleRegisterClaim}
@@ -261,6 +257,8 @@ export default function DashboardPage() {
                   isClaimActive={isClaimActive}
                   cooldownDaysLeft={cooldownDaysLeft}
                 />
+              </div>
+              <div>
                 <ContractPanel
                   walletState={walletState}
                   stats={stats}
@@ -297,6 +295,9 @@ export default function DashboardPage() {
                   zkVerified={!!activeClaim?.zkVerified}
                   onLoanAction={refreshAfterSend}
                 />
+              </div>
+              <div className="mt-6">
+                <EventFeed />
               </div>
             </div>
           )}
