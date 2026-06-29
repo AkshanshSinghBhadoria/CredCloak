@@ -26,6 +26,7 @@ import { MobileNav } from '@/components/MobileNav';
 const tabs = [
   { id: 'overview', label: 'Overview' },
   { id: 'readiness', label: 'Readiness' },
+  { id: 'zk-loans', label: 'ZK Loans' },
   { id: 'transactions', label: 'Transactions' },
   { id: 'send-xlm', label: 'Send XLM' },
 ] as const;
@@ -236,6 +237,13 @@ export default function DashboardPage() {
               <div className="mt-6">
                 <FinancialStats stats={stats} isLoading={isLoading} />
               </div>
+
+              <div className="grid gap-6 md:grid-cols-[minmax(0,400px)_1fr]">
+                <Card className="p-6 flex flex-col justify-center items-center">
+                  <DTIGauge dtiRatio={stats.dtiRatio} />
+                </Card>
+                <EventFeed />
+              </div>
             </div>
           )}
 
@@ -243,12 +251,9 @@ export default function DashboardPage() {
             <div className="animate-rise space-y-6">
               <div>
                 <h1 className="font-display text-4xl font-bold text-white">Loan Readiness</h1>
-                <p className="mt-2 text-slate-400">DTI ratio and balance analysis projections.</p>
+                <p className="mt-2 text-slate-400">Review your eligibility snapshots and claim registry status.</p>
               </div>
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_1fr]">
-                <Card className="p-6">
-                  <DTIGauge dtiRatio={stats.dtiRatio} />
-                </Card>
+              <div className="grid gap-6 md:grid-cols-2">
                 <LoanReadinessSnapshot
                   indicators={loanReadiness}
                   onRegisterClick={handleRegisterClaim}
@@ -256,9 +261,6 @@ export default function DashboardPage() {
                   isClaimActive={isClaimActive}
                   cooldownDaysLeft={cooldownDaysLeft}
                 />
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
                 <ContractPanel
                   walletState={walletState}
                   stats={stats}
@@ -271,6 +273,17 @@ export default function DashboardPage() {
                   txStatus={txStatus}
                   thresholdsMet={thresholdsMet}
                 />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'zk-loans' && (
+            <div className="animate-rise space-y-6">
+              <div>
+                <h1 className="font-display text-4xl font-bold text-white">ZK Loans & Liquidity Pool</h1>
+                <p className="mt-2 text-slate-400">Generate browser-based zero-knowledge proofs privately and request micro-loans.</p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
                 <ZKProofPanel
                   stats={stats}
                   borrowerAddress={walletState.address}
@@ -278,16 +291,12 @@ export default function DashboardPage() {
                   onProofVerified={loadOnChainData}
                   claimRegistered={hasActiveClaim}
                 />
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
                 <LoanPoolPanel
                   walletState={walletState}
                   signTransaction={signTransaction}
                   zkVerified={!!activeClaim?.zkVerified}
                   onLoanAction={refreshAfterSend}
                 />
-                <EventFeed />
               </div>
             </div>
           )}
