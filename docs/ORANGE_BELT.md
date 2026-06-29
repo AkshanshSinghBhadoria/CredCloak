@@ -88,3 +88,21 @@ NEXT_PUBLIC_CONTRACT_ADDRESS=CANCQ2OSUUBAFHFR74JOSYPOMVSMIWECAUUMVBJCWLPQUJMOEWK
 NEXT_PUBLIC_LOAN_POOL_ADDRESS=CCG73VOI47GXNG7HPULUTX3MCK4E7BOLUVIC6RVIO527NKN3APCJHFYU
 NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
 ```
+
+---
+
+## 📸 Application Snapshots
+
+The following screenshots capture the new features and integrations added in Level 3 (Orange Belt):
+
+### 1. Loan Readiness Claim
+The loan readiness dashboard allows users to review their credit checklist and register their claim on-chain.
+![Loan Readiness Claim](../snapshots/9_Readiness%20Claim.png)
+
+### 2. Browser-Based ZK Proof Generation
+Users can generate zero-knowledge proofs locally in the browser to privately verify their DTI and balance thresholds without exposing underlying data.
+![ZK Proof Generation](../snapshots/10_ZK%20Proof%20generation.png)
+
+### 3. ZK-Gated Micro-Loan Pool
+Gated liquidity pool that verifies on-chain claims and ZK proofs via inter-contract queries before executing instant testnet XLM disbursements.
+![ZK-Gated Micro-Loan Pool](../snapshots/11_Micro%20Loan%20Pool.png)
