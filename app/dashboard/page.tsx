@@ -209,22 +209,28 @@ export default function DashboardPage() {
 
         <div className="mx-auto max-w-7xl px-5 py-8 pb-24 lg:pb-8">
           {activeTab === 'overview' && (
-            <div className="animate-rise space-y-6">
-              <div className="flex flex-wrap items-end justify-between gap-5">
+            <div className="animate-rise space-y-8 py-4">
+              <div className="flex flex-col items-center justify-center text-center gap-8 max-w-3xl mx-auto">
                 <div>
-                  <h1 className="font-display text-4xl font-bold text-white">Financial Health Dashboard</h1>
-                  <p className="mt-2 text-slate-400">
-                    Balance: <span className="font-display text-xl font-bold text-white">{formatXLM(currentBalance)} XLM</span>
-                    {lastFetched && <span className="ml-3 text-xs">Updated {lastFetched.toLocaleTimeString()}</span>}
+                  <h1 className="font-display text-5xl font-black tracking-tight text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-400">
+                    Financial Health Dashboard
+                  </h1>
+                  <p className="mt-3 text-slate-400 text-sm font-medium">
+                    Balance: <span className="font-display text-lg font-bold text-indigo-400">{formatXLM(currentBalance)} XLM</span>
+                    {lastFetched && <span className="ml-3 text-xs text-slate-500 font-mono">· Updated {lastFetched.toLocaleTimeString()}</span>}
                   </p>
                 </div>
-                <div className="flex rounded-xl border border-slate-800 bg-slate-950/60 p-1">
+                <div className="flex rounded-xl border border-slate-800/80 bg-slate-950/50 p-1 shadow-inner">
                   {([30, 60, 90] as const).map((days) => (
                     <button
                       type="button"
                       key={days}
                       onClick={() => setWindowDays(days)}
-                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${windowDays === days ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                      className={`rounded-lg px-5 py-1.5 text-xs font-bold tracking-wide uppercase transition-all duration-200 ${
+                        windowDays === days
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-900/40'
+                      }`}
                     >
                       {days} days
                     </button>
@@ -232,9 +238,9 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {error && <div className="mt-5 rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-100">{error}</div>}
+              {error && <div className="mt-5 rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-100 max-w-3xl mx-auto">{error}</div>}
 
-              <div className="mt-6">
+              <div>
                 <FinancialStats stats={stats} isLoading={isLoading} />
               </div>
             </div>
