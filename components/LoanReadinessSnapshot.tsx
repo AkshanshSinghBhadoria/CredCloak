@@ -14,12 +14,14 @@ export function LoanReadinessSnapshot({
   isRegisterDisabled,
   isClaimActive,
   cooldownDaysLeft,
+  onGenerateZKProofClick,
 }: {
   indicators: LoanReadinessIndicator[];
   onRegisterClick?: () => void;
   isRegisterDisabled?: boolean;
   isClaimActive?: boolean;
   cooldownDaysLeft?: number;
+  onGenerateZKProofClick?: () => void;
 }) {
   return (
     <Card className="p-6">
@@ -67,11 +69,10 @@ export function LoanReadinessSnapshot({
         )}
         <button
           type="button"
-          disabled
-          title="ZK proof generation is coming in a future update"
-          className="flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 font-semibold text-slate-500"
+          onClick={onGenerateZKProofClick}
+          className="flex-1 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3 font-semibold text-indigo-300 hover:bg-indigo-500/20 transition"
         >
-          Generate ZK Proof - Coming Soon
+          Generate ZK Proof
         </button>
       </div>
     </Card>

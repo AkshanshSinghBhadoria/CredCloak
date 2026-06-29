@@ -256,6 +256,7 @@ export default function DashboardPage() {
                   isRegisterDisabled={isRegisterDisabled}
                   isClaimActive={isClaimActive}
                   cooldownDaysLeft={cooldownDaysLeft}
+                  onGenerateZKProofClick={() => setActiveTab('zk-loans')}
                 />
               </div>
               <div>
