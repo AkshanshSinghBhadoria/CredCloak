@@ -123,6 +123,21 @@ The dashboard fetches and lists recent native payments from Horizon for the conn
 The "Send XLM" form handles local transaction composition, secure wallet signing, and submission. Once complete, it displays transaction feedback, success status, and a direct clickable link to the transaction detail on the Stellar Expert block explorer.
 ![Successful Testnet Transaction Result](./snapshots/5_TransactionFeedback.jpeg)
 
+### 6. Mobile Responsive UI (Level 3 Requirement)
+The layout dynamically adapts to mobile screens with a sticky bottom navigation bar, touch-optimized button targets, and vertically stacked financial cards and scrollable lists.
+*(Place your screenshot of the mobile dashboard viewport here as `9_MobileResponsiveUI.png`)*
+![Mobile Responsive UI](./snapshots/9_MobileResponsiveUI.png)
+
+### 7. CI/CD Pipeline Running (Level 3 Requirement)
+A GitHub Actions workflow verifies typescript validation, Next.js build integrity, Jest unit tests, and Soroban contract compilation on every push/PR.
+*(Place your screenshot of the GitHub Actions build success screen here as `10_CICDPipeline.png`)*
+![CI/CD Pipeline Running](./snapshots/10_CICDPipeline.png)
+
+### 8. Test Output showing 3+ Passing Tests (Level 3 Requirement)
+Unit and integration test suites cover frontend components, financial scoring math, and contract operations, showing all tests passing.
+*(Place your screenshot of the passing Jest or Cargo test output terminal here as `11_TestOutput.png`)*
+![Test Output with 3+ Passing Tests](./snapshots/11_TestOutput.png)
+
 ---
 
 ## ⚙️ Setup & Installation

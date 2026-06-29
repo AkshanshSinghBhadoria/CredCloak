@@ -26,10 +26,10 @@ Stellar Horizon acts as the gateway to the classic Stellar blockchain. The Sorob
 ### 2. The Smart Contract Layer (Proof Registry & Loan Pool)
 Two Soroban smart contracts written in Rust and deployed to the Stellar Testnet:
 - **`CredCloakRegistry` (Registry)**:
-  * Address: `CDHNF2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52RET`
+  * Address: `CANCQ2OSUUBAFHFR74JOSYPOMVSMIWECAUUMVBJCWLPQUJMOEWKSTTR6`
   * Stores borrower claims, registers them after checking cooldown, supports upgrading claims to `zk_verified`, and exposes `has_claim` to other contracts.
 - **`CredCloakLoanPool` (Loan Pool)**:
-  * Address: `CBX44C272X6X2LNW6SAFFW3CDT4LQFEMV5KF3ZYCH5DLKUKBWUJAYTP3RH52`
+  * Address: `CCG73VOI47GXNG7HPULUTX3MCK4E7BOLUVIC6RVIO527NKN3APCJHFYU`
   * Holds XLM for micro-loans. Disburses interest-free micro-loans only to addresses that provide a valid ZK proof and have registered a claim in the Registry (validated via an inter-contract call).
 
 ### 3. The Zero-Knowledge Prover Layer (Noir JS)
