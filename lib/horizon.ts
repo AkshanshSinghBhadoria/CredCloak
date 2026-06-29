@@ -50,18 +50,40 @@ export async function fetchTransactions(address: string, limit = 200): Promise<S
   }
 
   const data = await response.json();
-  const transactions = ((data._embedded?.records ?? []) as HorizonPaymentRecord[])
-    .filter((record) => record.type === 'payment' && record.asset_type === 'native' && record.amount && record.from && record.to)
-    .map((record): StellarTransaction => ({
-      id: record.id,
-      hash: record.transaction_hash,
-      createdAt: record.created_at,
-      type: record.to === address ? 'received' : 'sent',
-      amount: record.amount ?? '0',
-      asset: 'XLM',
-      counterparty: record.to === address ? record.from ?? '' : record.to ?? '',
-      successful: true,
-    }));
+  const transactions = ((data._embedded?.records ?? []) as any[])
+    .filter((record) => {
+      if (record.type === 'payment') {
+        return record.asset_type === 'native' && record.amount && record.from && record.to;
+      }
+      if (record.type === 'create_account') {
+        return record.starting_balance && record.funder && record.account;
+      }
+      return false;
+    })
+    .map((record): StellarTransaction => {
+      if (record.type === 'create_account') {
+        return {
+          id: record.id,
+          hash: record.transaction_hash,
+          createdAt: record.created_at,
+          type: record.account === address ? 'received' : 'sent',
+          amount: record.starting_balance ?? '0',
+          asset: 'XLM',
+          counterparty: record.account === address ? record.funder ?? '' : record.account ?? '',
+          successful: true,
+        };
+      }
+      return {
+        id: record.id,
+        hash: record.transaction_hash,
+        createdAt: record.created_at,
+        type: record.to === address ? 'received' : 'sent',
+        amount: record.amount ?? '0',
+        asset: 'XLM',
+        counterparty: record.to === address ? record.from ?? '' : record.to ?? '',
+        successful: true,
+      };
+    });
 
   if (typeof window !== 'undefined') {
     window.sessionStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), transactions }));
