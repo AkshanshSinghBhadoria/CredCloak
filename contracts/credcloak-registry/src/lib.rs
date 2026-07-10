@@ -20,6 +20,8 @@ pub struct ReadinessClaim {
     pub history_pass: bool,
     pub zk_verified: bool,      // NEW
     pub proof_hash: Option<BytesN<32>>, // NEW
+    pub score_minted: bool,     // NEW (Level 4)
+    pub score_expiry: u64,      // NEW (Level 4) — 0 if never minted
 }
 
 // ---- Error Codes ----
@@ -30,6 +32,7 @@ pub enum ContractError {
     AlreadyRegistered = 1,      // Claim exists within 30-day cooldown
     ThresholdNotMet = 2,        // Stats don't pass minimum thresholds
     Unauthorized = 3,           // Caller is not the borrower
+    NotZkVerified = 4,          // Claim exists but is not yet ZK-verified
 }
 
 // ---- Contract ----
@@ -79,6 +82,8 @@ impl CredCloakRegistry {
             history_pass,
             zk_verified: false,
             proof_hash: None,
+            score_minted: false,
+            score_expiry: 0,
         };
         env.storage().persistent().set(&claim_key, &claim);
 
@@ -149,5 +154,52 @@ impl CredCloakRegistry {
     /// Alias of has_active_claim for simpler inter-contract calls
     pub fn has_claim(env: Env, borrower: Address) -> bool {
         Self::has_active_claim(env, borrower)
+    }
+
+    /// Mint a CredCloak Score soulbound token to borrower's wallet.
+    /// Called automatically after a successful loan approval.
+    /// Non-transferable — stored against the borrower address permanently.
+    pub fn mint_score(
+        env: Env,
+        borrower: Address,
+        proof_timestamp: u64,
+    ) -> Result<(), ContractError> {
+        borrower.require_auth();
+
+        let claim_key = (CLAIMS_KEY, borrower.clone());
+        let mut claim = env.storage().persistent()
+            .get::<_, ReadinessClaim>(&claim_key)
+            .ok_or(ContractError::Unauthorized)?;
+
+        if !claim.zk_verified {
+            return Err(ContractError::NotZkVerified);
+        }
+
+        // Score valid for 30 days from proof timestamp
+        let expiry = proof_timestamp + (30 * 24 * 60 * 60);
+        claim.score_minted = true;
+        claim.score_expiry = expiry;
+        env.storage().persistent().set(&claim_key, &claim);
+
+        // Emit score minted event
+        env.events().publish(
+            (symbol_short!("score"), Symbol::new(&env, "minted")),
+            (borrower.clone(), proof_timestamp, expiry)
+        );
+
+        Ok(())
+    }
+
+    /// Read-only: check if address has a valid, non-expired CredCloak Score.
+    /// Any external protocol can call this.
+    pub fn has_valid_score(env: Env, borrower: Address) -> bool {
+        let claim_key = (CLAIMS_KEY, borrower);
+        if let Some(claim) = env.storage().persistent()
+            .get::<_, ReadinessClaim>(&claim_key) {
+            return claim.score_minted
+                && claim.zk_verified
+                && env.ledger().timestamp() < claim.score_expiry;
+        }
+        false
     }
 }
