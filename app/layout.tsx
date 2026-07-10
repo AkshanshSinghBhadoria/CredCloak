@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/react';
 import { Providers } from '@/app/providers';
 import './globals.css';
 
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html lang="en">
       <body className={`${display.variable} ${sans.variable} ${mono.variable}`}>
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );

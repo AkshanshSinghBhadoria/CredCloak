@@ -3,9 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card } from './ui/Card';
 import { LoadingSpinner } from './ui/LoadingSpinner';
+import { Skeleton } from './ui/Skeleton';
 import { requestLoan, repayLoan, fetchLoan, fetchPoolBalance } from '@/lib/contract';
 import { LoanRequest, WalletState, TxStatus } from '@/lib/types';
 import { formatXLM } from '@/lib/financial';
+import { Analytics } from '@/lib/analytics';
+import { FeedbackWidget } from './FeedbackWidget';
+import toast from 'react-hot-toast';
 
 interface LoanPoolPanelProps {
   walletState: WalletState;
@@ -27,6 +31,7 @@ export function LoanPoolPanel({
   const [amount, setAmount] = useState('20'); // Default loan amount
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const loadPoolDetails = useCallback(async () => {
     if (!walletState.address) return;
@@ -64,6 +69,8 @@ export function LoanPoolPanel({
     setErrorMsg(null);
     setSuccessMsg(null);
 
+    Analytics.loanRequested(requestAmt);
+
     try {
       // Create a dummy proof of 64 bytes (the contract expects >= 32 bytes)
       const dummyProof = new Uint8Array(64);
@@ -87,15 +94,20 @@ export function LoanPoolPanel({
       if (result.success) {
         setTxStatus('confirmed');
         setSuccessMsg(`Micro-loan of ${requestAmt} XLM approved and disbursed!`);
+        Analytics.loanApproved(requestAmt);
+        toast.success(`Micro-loan of ${requestAmt} XLM approved and disbursed!`);
+        setShowFeedback(true);
         await loadPoolDetails();
         onLoanAction();
       } else {
         setTxStatus('failed');
         setErrorMsg(result.errorMessage || 'Failed to request loan.');
+        toast.error(result.errorMessage || 'Failed to request loan.');
       }
     } catch (err: any) {
       setTxStatus('failed');
       setErrorMsg(err.message || 'An unexpected error occurred.');
+      toast.error(err.message || 'An unexpected error occurred.');
     }
   };
 
@@ -117,15 +129,19 @@ export function LoanPoolPanel({
       if (result.success) {
         setTxStatus('confirmed');
         setSuccessMsg(`Repaid ${repayAmt} XLM back to the pool successfully.`);
+        Analytics.loanRepaid();
+        toast.success(`Repaid ${repayAmt} XLM back to the pool successfully.`);
         await loadPoolDetails();
         onLoanAction();
       } else {
         setTxStatus('failed');
         setErrorMsg(result.errorMessage || 'Failed to repay loan.');
+        toast.error(result.errorMessage || 'Failed to repay loan.');
       }
     } catch (err: any) {
       setTxStatus('failed');
       setErrorMsg(err.message || 'An unexpected error occurred.');
+      toast.error(err.message || 'An unexpected error occurred.');
     }
   };
 
@@ -163,8 +179,9 @@ export function LoanPoolPanel({
         </div>
 
         {isLoading ? (
-          <div className="py-4 flex justify-center text-slate-400 text-xs">
-            <LoadingSpinner label="Loading pool status..." />
+          <div className="space-y-3 py-2">
+            <Skeleton className="h-16 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
           </div>
         ) : hasActiveLoan && loan ? (
           /* Active Loan Details & Repayment */
@@ -248,6 +265,10 @@ export function LoanPoolPanel({
           <div className="p-3 rounded-lg border border-rose-500/30 bg-rose-500/10 text-xs text-rose-300 animate-rise">
             {errorMsg}
           </div>
+        )}
+
+        {showFeedback && (
+          <FeedbackWidget onDismiss={() => setShowFeedback(false)} />
         )}
       </div>
     </Card>

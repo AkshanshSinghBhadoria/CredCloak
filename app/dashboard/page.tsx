@@ -19,9 +19,12 @@ import { ContractPanel } from '@/components/ContractPanel';
 import { EventFeed } from '@/components/EventFeed';
 import { fetchActiveClaim, fetchTotalClaims, registerReadinessClaim } from '@/lib/contract';
 import { ReadinessClaim, TxStatus } from '@/lib/types';
+import { Analytics } from '@/lib/analytics';
+import toast from 'react-hot-toast';
 import { ZKProofPanel } from '@/components/ZKProofPanel';
 import { LoanPoolPanel } from '@/components/LoanPoolPanel';
 import { MobileNav } from '@/components/MobileNav';
+import { CredCloakScore } from '@/components/CredCloakScore';
 
 const tabs = [
   { id: 'overview', label: 'Overview' },
@@ -90,7 +93,7 @@ export default function DashboardPage() {
 
   const handleRegisterClaim = async () => {
     if (isAccountEmpty) {
-      alert("Registration failed: Your wallet balance is 0 XLM. You cannot register a readiness claim with an empty account. Please fund your account using the Friendbot button to establish transaction history.");
+      toast.error('Your wallet balance is 0 XLM. Fund your account using the Friendbot button to establish transaction history before registering a claim.');
       return;
     }
 
@@ -115,14 +118,18 @@ export default function DashboardPage() {
         setTxStatus('confirmed');
         setTxHash(result.txHash);
         setExplorerUrl(result.explorerUrl);
+        Analytics.claimRegistered(isDtiPassing, isAvgBalancePassing);
+        toast.success('Readiness claim registered on-chain.');
         await loadOnChainData();
       } else {
         setTxStatus('failed');
         setErrorMessage(result.errorMessage || 'Contract invocation failed.');
+        toast.error(result.errorMessage || 'Contract invocation failed.');
       }
     } catch (err: any) {
       setTxStatus('failed');
       setErrorMessage(err.message || 'An unexpected error occurred.');
+      toast.error(err.message || 'An unexpected error occurred.');
     }
   };
 
@@ -303,6 +310,16 @@ export default function DashboardPage() {
                   onLoanAction={refreshAfterSend}
                 />
               </div>
+              {!!activeClaim?.zkVerified && (
+                <div className="mt-6 max-w-xl">
+                  <CredCloakScore
+                    claim={activeClaim}
+                    borrowerAddress={walletState.address}
+                    signTransaction={signTransaction}
+                    onScoreMinted={loadOnChainData}
+                  />
+                </div>
+              )}
               <div className="mt-6">
                 <EventFeed />
               </div>
