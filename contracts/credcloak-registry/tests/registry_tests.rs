@@ -90,4 +90,60 @@ mod tests {
 
         assert_eq!(client.get_total_claims(), 1);
     }
+
+    #[test]
+    fn test_mint_score_requires_zk_verified() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, CredCloakRegistry);
+        let client = CredCloakRegistryClient::new(&env, &contract_id);
+        let borrower = Address::generate(&env);
+        env.ledger().set_timestamp(1000);
+
+        client.register_claim(
+            &borrower,
+            &Bytes::from_slice(&env, b"test_hash_12345678901234567890ab"),
+            &true, &true, &true,
+        );
+
+        // Not ZK-verified yet — mint should fail
+        let result = client.try_mint_score(&borrower, &1000u64);
+        assert_eq!(result, Err(Ok(ContractError::NotZkVerified)));
+
+        assert_eq!(client.has_valid_score(&borrower), false);
+    }
+
+    #[test]
+    fn test_mint_score_success_and_expiry() {
+        use soroban_sdk::BytesN;
+
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, CredCloakRegistry);
+        let client = CredCloakRegistryClient::new(&env, &contract_id);
+        let borrower = Address::generate(&env);
+        env.ledger().set_timestamp(1000);
+
+        client.register_claim(
+            &borrower,
+            &Bytes::from_slice(&env, b"test_hash_12345678901234567890ab"),
+            &true, &true, &true,
+        );
+
+        client.upgrade_to_zk_verified(&borrower, &BytesN::from_array(&env, &[1u8; 32]));
+
+        client.mint_score(&borrower, &1000u64);
+
+        let claim = client.get_claim(&borrower).unwrap();
+        assert_eq!(claim.score_minted, true);
+        assert_eq!(claim.score_expiry, 1000 + 30 * 24 * 60 * 60);
+
+        // Still within 30 days — score valid
+        env.ledger().set_timestamp(1000 + 15 * 24 * 60 * 60);
+        assert_eq!(client.has_valid_score(&borrower), true);
+
+        // Past 30 days — score expired
+        env.ledger().set_timestamp(1000 + 31 * 24 * 60 * 60);
+        assert_eq!(client.has_valid_score(&borrower), false);
+    }
 }
