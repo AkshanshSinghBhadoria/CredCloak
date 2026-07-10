@@ -58,12 +58,15 @@ export interface ReadinessClaim {
   historyPass: boolean;
   zkVerified?: boolean;      // NEW
   proofHash?: string;        // NEW
+  scoreMinted?: boolean;     // NEW (Level 4)
+  scoreExpiry?: number;      // NEW (Level 4)
 }
 
-export type ContractError = 
-  | 'AlreadyRegistered' 
-  | 'ThresholdNotMet' 
+export type ContractError =
+  | 'AlreadyRegistered'
+  | 'ThresholdNotMet'
   | 'Unauthorized'
+  | 'NotZkVerified'
   | 'ContractCallFailed'
   | 'WalletNotConnected';
 

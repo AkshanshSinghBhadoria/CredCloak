@@ -231,6 +231,118 @@ export async function upgradeClaimToZKVerified(
   }
 }
 
+export async function mintScore(
+  borrowerAddress: string,
+  proofTimestamp: number,
+  signTransaction: (xdr: string) => Promise<string>
+): Promise<ClaimResult> {
+  try {
+    if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS.startsWith('CXXXX')) {
+      return {
+        success: false,
+        error: 'ContractCallFailed',
+        errorMessage: 'Contract not configured.',
+      };
+    }
+
+    const server = new StellarSdk.rpc.Server(SOROBAN_RPC);
+    const account = await server.getAccount(borrowerAddress);
+    const contract = new StellarSdk.Contract(CONTRACT_ADDRESS);
+
+    const tx = new StellarSdk.TransactionBuilder(account, {
+      fee: StellarSdk.BASE_FEE,
+      networkPassphrase: NETWORK_PASSPHRASE,
+    })
+      .addOperation(
+        contract.call(
+          'mint_score',
+          StellarSdk.Address.fromString(borrowerAddress).toScVal(),
+          StellarSdk.nativeToScVal(BigInt(Math.floor(proofTimestamp)), { type: 'u64' }),
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    const simResult = await server.simulateTransaction(tx);
+    if (StellarSdk.rpc.Api.isSimulationError(simResult)) {
+      const errCode = parseContractError(simResult.error);
+      return {
+        success: false,
+        error: errCode,
+        errorMessage: errCode === 'ContractCallFailed'
+          ? `Simulation failed: ${simResult.error}`
+          : getErrorMessage(errCode),
+      };
+    }
+
+    const preparedTx = StellarSdk.rpc.assembleTransaction(tx, simResult).build();
+    const rawSignedXDR = await signTransaction(preparedTx.toXDR());
+    const signedXDR = extractSignedXDR(rawSignedXDR);
+    if (!signedXDR) {
+      throw new Error('Transaction signing failed or was cancelled.');
+    }
+    const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASSPHRASE);
+    const submitResult = await server.sendTransaction(signedTx);
+
+    if (submitResult.status === 'ERROR') {
+      return { success: false, error: 'ContractCallFailed', errorMessage: 'Transaction failed to submit.' };
+    }
+
+    const txHash = submitResult.hash;
+    const confirmed = await pollForConfirmation(server, txHash);
+    if (!confirmed) {
+      return { success: false, error: 'ContractCallFailed', errorMessage: 'Confirmation timed out.' };
+    }
+
+    return {
+      success: true,
+      txHash,
+      timestamp: Date.now(),
+      explorerUrl: `${EXPLORER_BASE}/${txHash}`,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: 'ContractCallFailed',
+      errorMessage: err.message ?? 'Failed to mint CredCloak Score.',
+    };
+  }
+}
+
+export async function fetchHasValidScore(
+  borrowerAddress: string
+): Promise<boolean> {
+  try {
+    if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS.startsWith('CXXXX')) return false;
+
+    const server = new StellarSdk.rpc.Server(SOROBAN_RPC);
+    const contract = new StellarSdk.Contract(CONTRACT_ADDRESS);
+    const keypair = StellarSdk.Keypair.random();
+    const account = new StellarSdk.Account(keypair.publicKey(), '0');
+    const tx = new StellarSdk.TransactionBuilder(account, {
+      fee: StellarSdk.BASE_FEE,
+      networkPassphrase: NETWORK_PASSPHRASE,
+    })
+      .addOperation(
+        contract.call(
+          'has_valid_score',
+          StellarSdk.Address.fromString(borrowerAddress).toScVal()
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    const result = await server.simulateTransaction(tx);
+    if (StellarSdk.rpc.Api.isSimulationSuccess(result) && result.result) {
+      return result.result.retval.b();
+    }
+    return false;
+  } catch (err) {
+    console.warn('Failed to fetch score validity:', err);
+    return false;
+  }
+}
+
 export async function requestLoan(
   borrowerAddress: string,
   amountXlm: number,
@@ -560,6 +672,9 @@ function parseContractError(error: string): ContractError {
   if (errStr.includes('Unauthorized') || errStr.includes('Error(Contract, #3)')) {
     return 'Unauthorized';
   }
+  if (errStr.includes('NotZkVerified') || errStr.includes('Error(Contract, #4)')) {
+    return 'NotZkVerified';
+  }
   return 'ContractCallFailed';
 }
 
@@ -600,6 +715,7 @@ export function getErrorMessage(error: ContractError): string {
     AlreadyRegistered: 'You already have an active claim. It refreshes in 30 days.',
     ThresholdNotMet: 'Your financial stats do not meet the minimum thresholds yet.',
     Unauthorized: 'Wallet mismatch. Please connect the correct wallet.',
+    NotZkVerified: 'Your claim must be ZK-verified before minting a CredCloak Score.',
     ContractCallFailed: 'Contract call failed. Please try again.',
     WalletNotConnected: 'Please connect your wallet first.',
   };
@@ -619,6 +735,8 @@ function parseClaimFromScVal(scVal: StellarSdk.xdr.ScVal): ReadinessClaim | null
     let historyPass = false;
     let zkVerified = false;
     let proofHash = '';
+    let scoreMinted = false;
+    let scoreExpiry = 0;
 
     for (const entry of map) {
       const keyStr = entry.key().sym()?.toString() || entry.key().sym() || '';
@@ -647,6 +765,10 @@ function parseClaimFromScVal(scVal: StellarSdk.xdr.ScVal): ReadinessClaim | null
         } catch {
           proofHash = val.bytes()?.toString('hex') || '';
         }
+      } else if (keyStr === 'score_minted') {
+        scoreMinted = val.b();
+      } else if (keyStr === 'score_expiry') {
+        scoreExpiry = Number(val.u64()?.toString() || 0);
       }
     }
 
@@ -659,6 +781,8 @@ function parseClaimFromScVal(scVal: StellarSdk.xdr.ScVal): ReadinessClaim | null
       historyPass,
       zkVerified,
       proofHash,
+      scoreMinted,
+      scoreExpiry,
     };
   } catch (err) {
     console.error('Error parsing claim ScVal:', err);
