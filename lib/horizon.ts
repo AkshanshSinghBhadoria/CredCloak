@@ -1,4 +1,5 @@
 import { StellarTransaction } from '@/lib/types';
+import { withRetry } from '@/lib/retry';
 
 const HORIZON_TESTNET = (process.env.NEXT_PUBLIC_HORIZON_URL ?? 'https://horizon-testnet.stellar.org').trim();
 const CACHE_TTL = 60_000;
@@ -15,20 +16,22 @@ interface HorizonPaymentRecord {
 }
 
 export async function fetchAccountDetails(address: string): Promise<{ balance: string; sequence: string }> {
-  const response = await fetch(`${HORIZON_TESTNET}/accounts/${address}`);
-  if (!response.ok) {
-    if (response.status === 404) throw new Error(`Account not found on Stellar testnet: ${address}`);
-    if (response.status === 429) throw new Error('Horizon rate limit reached. Please wait a moment and retry.');
-    throw new Error(`Failed to fetch account details (${response.status})`);
-  }
+  return withRetry(async () => {
+    const response = await fetch(`${HORIZON_TESTNET}/accounts/${address}`);
+    if (!response.ok) {
+      if (response.status === 404) throw new Error(`Account not found on Stellar testnet: ${address}`);
+      if (response.status === 429) throw new Error('Horizon rate limit reached. Please wait a moment and retry.');
+      throw new Error(`Failed to fetch account details (${response.status})`);
+    }
 
-  const data = await response.json();
-  const xlmBalance = data.balances?.find((balance: { asset_type: string }) => balance.asset_type === 'native');
+    const data = await response.json();
+    const xlmBalance = data.balances?.find((balance: { asset_type: string }) => balance.asset_type === 'native');
 
-  return {
-    balance: xlmBalance?.balance ?? '0',
-    sequence: data.sequence,
-  };
+    return {
+      balance: xlmBalance?.balance ?? '0',
+      sequence: data.sequence,
+    };
+  }, { retries: 3, baseDelayMs: 500 });
 }
 
 export async function fetchTransactions(address: string, limit = 200): Promise<StellarTransaction[]> {
@@ -42,14 +45,15 @@ export async function fetchTransactions(address: string, limit = 200): Promise<S
     }
   }
 
-  const response = await fetch(`${HORIZON_TESTNET}/accounts/${address}/payments?limit=${limit}&order=desc`);
-  if (!response.ok) {
-    if (response.status === 404) return [];
-    if (response.status === 429) throw new Error('Horizon rate limit reached. Cached data will be used when available.');
-    throw new Error('Failed to fetch transaction history from Horizon.');
-  }
-
-  const data = await response.json();
+  const data = await withRetry(async () => {
+    const response = await fetch(`${HORIZON_TESTNET}/accounts/${address}/payments?limit=${limit}&order=desc`);
+    if (!response.ok) {
+      if (response.status === 404) return { _embedded: { records: [] } };
+      if (response.status === 429) throw new Error('Horizon rate limit reached. Cached data will be used when available.');
+      throw new Error('Failed to fetch transaction history from Horizon.');
+    }
+    return response.json();
+  }, { retries: 3, baseDelayMs: 500 });
   const transactions = ((data._embedded?.records ?? []) as any[])
     .filter((record) => {
       if (record.type === 'payment') {
