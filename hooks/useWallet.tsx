@@ -11,6 +11,7 @@ import { xBullModule } from '@creit.tech/stellar-wallets-kit/modules/xbull';
 import { LobstrModule } from '@creit.tech/stellar-wallets-kit/modules/lobstr';
 import { fetchAccountDetails } from '@/lib/horizon';
 import { WalletState } from '@/lib/types';
+import { Analytics } from '@/lib/analytics';
 
 interface WalletContextValue {
   walletState: WalletState;
@@ -72,6 +73,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         balance,
         network: 'testnet',
       });
+      Analytics.walletConnected('stellar-wallets-kit');
     } catch (err) {
       console.error('Wallet connection failed:', err);
     } finally {

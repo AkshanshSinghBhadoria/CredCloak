@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { generateDTIProof, ZKProof } from '@/lib/zk';
 import { FinancialStats } from '@/lib/types';
+import { Analytics } from '@/lib/analytics';
 
 export type ZKProofStep =
   | 'idle'
@@ -26,6 +27,7 @@ export function useZKProof() {
     setStep('computing_inputs');
     setError(null);
     setProgressMsg('Reading your on-chain history...');
+    Analytics.proofGenerationStarted();
 
     try {
       setStep('generating_proof');
@@ -36,9 +38,11 @@ export function useZKProof() {
       setProof(zkProof);
       setStep('proof_ready');
       setProgressMsg(`Proof generated in ${(zkProof.generationTimeMs / 1000).toFixed(1)}s`);
+      Analytics.proofGenerationCompleted(zkProof.generationTimeMs);
     } catch (err: any) {
       setStep('failed');
       setError(err.message ?? 'Proof generation failed');
+      Analytics.proofGenerationFailed(err.message ?? 'unknown_error');
     }
   }, []);
 
