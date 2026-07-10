@@ -32,6 +32,30 @@ This release implements client-side zero-knowledge proof generation, a second sm
 
 ---
 
+## 🟢 Level 4 (Green Belt) Key Features & Updates
+
+Building on the Level 3 protocol, this release focuses on production readiness: a portable credit signal, guided onboarding, and observability. See [`docs/GREEN_BELT.md`](./docs/GREEN_BELT.md) for full details.
+
+*   **CredCloak Score**: A non-transferable, on-chain credit signal (`mint_score` / `has_valid_score` on the Registry contract), valid for 30 days from ZK-verification, readable by any external Stellar lending protocol.
+*   **Guided Onboarding Wizard**: A new `/onboarding` route walks first-time users through wallet connect → funding → claim registration → ZK proof → first micro-loan in 5 steps.
+*   **In-App Feedback Widget**: A post-loan feedback form (rating, recommend, comments) persisted via a serverless API route.
+*   **Error Monitoring**: Sentry integration with a global React error boundary and filtered noise from expected wallet-signature declines.
+*   **Product Analytics**: Vercel Analytics custom event tracking across the wallet, claim, proof, loan, and feedback lifecycle.
+*   **Toast Notifications**: All blocking `alert()` calls replaced with non-blocking toast notifications.
+*   **Retry Logic & Skeleton Loaders**: Exponential backoff retries on Horizon API calls, plus skeleton loading states replacing spinner-only loading UI.
+
+### 🧪 Real-User Validation
+
+| # | Wallet Address (testnet) | Loan Request TX Hash | Rating | Would Recommend |
+|---|---------------------------|-----------------------|--------|------------------|
+| 1-10 | _pending — see [`docs/USER_FEEDBACK.md`](./docs/USER_FEEDBACK.md)_ | | | |
+
+### 📊 Analytics & Monitoring Dashboards
+
+_Placeholder — add Vercel Analytics and Sentry dashboard screenshots here before submission._
+
+---
+
 ## 🏗️ Technical Architecture
 
 CredCloak follows a robust multi-layered client-side approach:
