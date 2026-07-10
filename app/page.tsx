@@ -36,6 +36,9 @@ export default function HomePage() {
                 Open Dashboard
               </Link>
             )}
+            <Link href="/onboarding" className="rounded-xl border border-indigo-500/40 px-5 py-3 font-semibold text-indigo-300 hover:border-indigo-400 hover:text-white">
+              Guided Onboarding →
+            </Link>
           </div>
         </div>
 
