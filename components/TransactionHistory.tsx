@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { getStellarLabUrl } from '@/lib/stellar';
 import { truncateAddress, truncateHash } from '@/lib/financial';
 import { StellarTransaction } from '@/lib/types';
@@ -76,7 +77,17 @@ export function TransactionHistory({ transactions, isLoading, address, onFunded 
         </div>
       </div>
       {isLoading ? (
-        <div className="p-8 text-slate-300"><LoadingSpinner label="Loading transactions..." /></div>
+        <div className="p-5 space-y-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="flex items-center gap-4 p-3">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-28 ml-auto" />
+              <Skeleton className="h-4 w-28" />
+            </div>
+          ))}
+        </div>
       ) : visible.length === 0 ? (
         <div className="p-8 text-center">
           <p className="font-display text-lg font-semibold text-white">No transactions found.</p>
